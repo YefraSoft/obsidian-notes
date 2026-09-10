@@ -18,6 +18,12 @@ proyecto: tsj-web
 
 ---
 
+## Pendientes
+
+- [ ] Ajustar los endpoints por dominio
+- [ ] Agregar oauth
+- [ ] Corregir el verifier
+
 ## Estado Actual (resumen ejecutivo)
 
 | Área | Estado |
@@ -58,13 +64,13 @@ proyecto: tsj-web
 
 **Familias por recurso (Unidad Académica):**
 
-| Familia | Base (sin recurso) | Own (solo `scope` == UA del recurso) | All (cualquier UA) |
-|---------|--------------------|--------------------------------------|--------------------|
-| Read | `Read` (todos) | `ReadOwn` | `ReadAll` |
-| Write | — | `WriteOwn` | `WriteAll` |
-| Edit | — | `EditOwn` | `EditAll` |
-| Delete | — | `DeleteOwn` (*cambio de estado*) | `DeleteAll` (*ban*) |
-| Drop | — | — | `DropAll` (borrado físico, solo `Admin`) |
+| Familia | Base (sin recurso) | Own (solo `scope` == UA del recurso) | All (cualquier UA)                       |
+| ------- | ------------------ | ------------------------------------ | ---------------------------------------- |
+| Read    | `Read` (todos)     | `ReadOwn`                            | `ReadAll`                                |
+| Write   | —                  | `WriteOwn`                           | `WriteAll`                               |
+| Edit    | —                  | `EditOwn`                            | `EditAll`                                |
+| Delete  | —                  | `DeleteOwn` (*cambio de estado*)     | `DeleteAll` (*ban*)                      |
+| Drop    | —                  | —                                    | `DropAll` (borrado físico, solo `Admin`) |
 
 > Semántica de borrado: `DeleteAll` = BAN (desactivar contenido), `DropAll` = Delete (físico, Admin).
 
