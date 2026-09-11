@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "TSJ-Web - Plan de Desarrollo.md",
+                "file": "nummex-app-plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "TSJ-Web - Plan de Desarrollo"
+              "title": "nummex-app-plan"
             }
           }
         ]
@@ -190,6 +190,13 @@
   },
   "active": "53f7b538ee124edd",
   "lastOpenFiles": [
+    "Tsj-Web-plan-desarollo.md",
+    "nummex-app-plan.md",
+    "Tsj-web-F1.md",
+    "servicio-cp-manual.md",
+    "nummex-css-plan-2026-08-18.md",
+    "nummex-agent-rag-plan.md",
+    "nummex-app-plan-2026-08-12.md",
     "TSJ-Web - FASE 1 - Mapeo BD.md",
     "TSJ-Web - Plan de Desarrollo.md",
     "Servicio CP - Manual de Uso.md",
