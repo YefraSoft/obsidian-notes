@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "nummex-app-plan.md",
+                "file": "nummex-cloudflare-deploy-plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "nummex-app-plan"
+              "title": "nummex-cloudflare-deploy-plan"
             }
           }
         ]
@@ -190,16 +190,29 @@
   },
   "active": "53f7b538ee124edd",
   "lastOpenFiles": [
-    "Tsj-Web-plan-desarollo.md",
-    "nummex-app-plan.md",
-    "Tsj-web-F1.md",
-    "servicio-cp-manual.md",
-    "nummex-css-plan-2026-08-18.md",
+    "nummex-agent-rag-plan.md.tmp.33492.479b4fa3836c",
+    "nummex-agent-rag-plan.md.tmp.33492.95f9bd147d76",
+    "nummex-agent-rag-plan.md.tmp.33492.53c789e63def",
+    "nummex-agent-rag-plan.md.tmp.33492.3361e94b0a87",
+    "nummex-agent-rag-plan.md.tmp.33492.89d5522fe1f4",
     "nummex-agent-rag-plan.md",
+    "nummex-agent-rag-plan.md.tmp.33492.88e3a6036321",
+    "nummex-agent-rag-plan.md.tmp.33492.e77fe9a2dcf1",
+    "nummex-cloudflare-deploy-plan.md",
+    "nummex-agent-rag-plan.md.tmp.33492.e8c05ac7320f",
+    "nummex-agent-rag-plan.md.tmp.33492.903bcf16c4bd",
+    "nummex-agent-rag-plan.md.tmp.33492.2e309b1c0070",
+    "nummex-agent-rag-plan.md.tmp.33492.34a203453f7b",
+    "nummex-app-plan.md",
+    "servicio-cp-manual.md",
+    "Tsj-Web-plan-desarollo.md",
+    "Tsj-web-F1.md",
+    "rh-cotla-plan.md",
+    "nummex-css-plan-2026-08-18.md",
+    "Bienvenido.md",
     "nummex-app-plan-2026-08-12.md",
     "TSJ-Web - FASE 1 - Mapeo BD.md",
     "TSJ-Web - Plan de Desarrollo.md",
-    "Servicio CP - Manual de Uso.md",
-    "Bienvenido.md"
+    "Servicio CP - Manual de Uso.md"
   ]
 }
