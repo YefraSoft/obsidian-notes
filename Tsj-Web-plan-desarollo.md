@@ -20,28 +20,34 @@ proyecto: tsj-web
 
 ## Pendientes
 
-- [ ] Ajustar los endpoints por dominio
-- [ ] Agregar oauth
-- [ ] Corregir el verifier
+- [x] Ajustar los endpoints por dominio
+- [x] Agregar oauth (Authorization Code + PKCE + JWT propio)
+- [x] Corregir el verifier
+- [x] Configurar credenciales reales de Google (Client ID/Secret) + CORS
+- [x] Confirmar/registrar en la consola de Google la redirect URI real del frontend + **rotar secrets** (Client Secret / `JWT_SECRET`) — el `.env` ya fue retirado de git
+- [ ] Llenar `GoogleAuth:AllowedRedirectUris` con las URIs reales del frontend (hoy vacío = permite todas)
+- [ ] Poblar `users.unidad_academica_id` en el login (la columna ya está en el esquema) + tenancy (Fase 3)
+- [ ] Terminar dominio `CustomizationUa` (verifier + services + controller)
+- [ ] **Ban de UA (Fase 3)**: columna `disabled` ya en el esquema; definir endpoint ban/unban (soft vía `DeleteAll`) + filtro en GET públicos
 
 ## Estado Actual (resumen ejecutivo)
 
 | Área | Estado |
 |------|--------|
 | Tablas en BD | 16 (definidas en `infra/db.sql`) |
-| Tablas cubiertas por backend | 11 (68.75%) |
-| Autenticación real | No existe — solo cookie anónimo falsificable (`PublicAuthHandler`) |
+| Tablas cubiertas por backend | 16/16 (100%) — 17 DbSets en `AppDbContext` (16 BD + users) |
+| Autenticación real | Sí — login Google (Authorization Code + PKCE) + JWT propio (`AuthSchemes.Jwt`) |
 | Roles en código | 4 (`Public`, `CampusManager`, `Director`, `Admin`) |
 | RBAC | Matriz implementada + `CanDoService` (Fase 3 parcial) |
-| Tabla `users` | Creada (sin `unidad_academica_id` aún) |
-| CORS | No configurado |
-| Rate limiting | Parcial (solo GET) |
-| Sesión | Cookie sin firmar (pendiente Google + firma) |
+| Tabla `users` | Creada con `unidad_academica_id` (columna en `db.sql` + FK; poblar pendiente) |
+| CORS | Configurado desde `Cors:AllowedOrigins` (fallback `localhost:3000` + `tecmm.mx`); sin `AllowCredentials` (SPA autentica con JWT) |
+| Rate limiting | Parcial (GET pública + `POST /auth/google`; en `Common/Config/RateLimiting/`) |
+| Sesión | JWT (HS256) emitido por tsj-core; cookie anónimo solo como fallback de lectura |
 
 | Fase | Estado |
 |------|--------|
 | FASE 1 — Mapeo de la BD | ✔ Completa |
-| FASE 2 — Seguridad con Google OAuth2 | ⏳ Pendiente |
+| FASE 2 — Seguridad con Google OAuth2 | ✔ Completa |
 | FASE 3 — Permisos y Roles | 🔄 Parcial |
 
 ---
@@ -72,21 +78,22 @@ proyecto: tsj-web
 | Delete  | —                  | `DeleteOwn` (*cambio de estado*)     | `DeleteAll` (*ban*)                      |
 | Drop    | —                  | —                                    | `DropAll` (borrado físico, solo `Admin`) |
 
-> Semántica de borrado: `DeleteAll` = BAN (desactivar contenido), `DropAll` = Delete (físico, Admin).
+> Semántica de borrado: `DeleteAll` = BAN (desactivar contenido vía `unidad_academica.disabled`), `DropAll` = Delete (físico, Admin).
 
 ### Autorización (`CanDoService`)
 - Permisos **sin recurso** (`AuthorizeChanges`, `ManageAccounts`, `DropAll`): verificación de rol directa.
 - Permisos **por recurso** (`Read/Write/Edit/Delete` con familias Own/All): resueltos por `ICanDoService` según el rol y la UA del recurso.
-- El *scope* del usuario llega como claim `unidad_academica_scope` (`AuthClaims.UnidadAcademicaScope`); si no existe, los permisos `Own` se deniegan (fail-closed). Lo poblará el handler de sesión de la Fase 2.
+- El *scope* del usuario llega como claim `unidad_academica_scope` (`AuthClaims.UnidadAcademicaScope`); si no existe, los permisos `Own` se deniegan (fail-closed). Lo emite `JwtTokenService` en el JWT cuando el usuario tiene `UnidadAcademicaId` (Fase 2).
 - Aplicación actual en `UnidadAcademicaController`:
-  - GET / GET{id} → `[Authorize(Policy = AuthPolicies.Public)]`
-  - POST (crear UA) → `Can(User, Policies.WriteAll)` (Director/Admin)
-  - PUT (editar UA) → `CanEdit(User, request.Id)` (CampusManager solo su UA; Director/Admin cualquiera)
-  - DELETE (borrar UA) → `CanDrop(User)` (solo Admin)
+  - GET / GET{id} → `[Authorize(Policy = AuthPolicies.Public)]` + rate limit `GetPublic`
+  - POST (crear UA) → `[Authorize(Policy = AuthPolicies.Director)]` + verifier `Can(User, WriteAll)` (Director/Admin)
+  - PUT (editar UA) → `[Authorize(Policy = AuthPolicies.CampusManager)]` + verifier `CanEdit(User, entity.Id)` (CampusManager solo su UA; Director/Admin cualquiera)
+  - DELETE (borrar UA) → `[Authorize(Policy = AuthPolicies.Admin)]` + verifier `CanDrop(User)` (solo Admin)
 - Las policies por rol (`AuthPolicies.Public|CampusManager|Director|Admin`) siguen registradas en `AuthModule` para Endpoints futuros.
 
 ### Sesión y autenticación
-- Flujo: **Google OAuth2** con cookie firmada ASP.NET (**Opción A**). Se descarta JWT/refresh.
+- Flujo: **Google OAuth2 (Authorization Code + PKCE)** → validación del `id_token` → **JWT propio (HS256)** emitido por tsj-core. Se actualiza la decisión previa (se descartó la cookie firmada / Opción A).
+- Schemes: `AuthSchemes.Default` = cookie anónimo (lectura, rol `Public`); `AuthSchemes.Jwt` = usuarios autenticados.
 - Esquema `Public` se mantiene como fallback para lectura (rol-neutral).
 
 ### Tenancy (control por unidad académica)
@@ -102,8 +109,8 @@ proyecto: tsj-web
 - **BD:** PostgreSQL (puerto 5432 via Docker)
 - **Cache:** Redis (puerto 6379 via Docker) — infra cableada, sin consumidores (rate limiting en memoria)
 - **Proxy:** Caddy (TLS termination)
-- **Auth actual:** Cookie anónimo no firmado (`PublicAuthHandler`)
-- **Auth objetivo:** Google OAuth2 + RBAC
+- **Auth actual:** Cookie anónimo no firmado (`AuthHandler`) + JWT propio (`AuthSchemes.Jwt`)
+- **Auth objetivo:** Google OAuth2 (PKCE) + RBAC
 
 ---
 
@@ -111,17 +118,23 @@ proyecto: tsj-web
 
 | Archivo | Propósito |
 |---------|-----------|
-| `infra/db.sql` | Esquema completo de BD (276 líneas) |
-| `infra/create-users-table.sql` | Tabla `users` (role, google_id, email) |
+| `infra/db.sql` | Esquema completo de BD (321 líneas; incluye `users` con `unidad_academica_id`) |
+| `backedn/tesj-core/Common/Config/RateLimiting/` | Rate limiting en memoria (`GetPublic` + `AuthLogin`) |
+| `backedn/tesj-core.Tests/` | Tests unitarios (16 verdes) |
 | `backedn/tesj-core/Program.cs` | Arranque y configuración |
-| `backedn/tesj-core/Data/AppDbContext.cs` | Contexto EF Core (11 DbSets) |
+| `backedn/tesj-core/Data/AppDbContext.cs` | Contexto EF Core (17 DbSets, cobertura 100%) |
 | `backedn/tesj-core/Common/Config/Security/AuthModule.cs` | Config de auth (policies, handlers, `CanDoService`) |
 | `backedn/tesj-core/Common/Config/Security/Roles/AppRoles.cs` | Roles definidos (4) |
-| `backedn/tesj-core/Common/Config/Security/Roles/Policies.cs` | Enum de permisos |
-| `backedn/tesj-core/Common/Config/Security/Roles/RolePermissions.cs` | Mapa roles→permisos |
-| `backedn/tesj-core/Common/Config/Security/Roles/CanDoService.cs` | Autorización por recurso (UA) |
+| `backedn/tesj-core/Common/Config/Security/Permissions/Policies.cs` | Enum de permisos |
+| `backedn/tesj-core/Common/Config/Security/Permissions/RolePermissions.cs` | Mapa roles→permisos |
+| `backedn/tesj-core/Common/Config/Security/Permissions/CanDoService.cs` | Autorización por recurso (UA) |
 | `backedn/tesj-core/Common/Config/Security/Models/AuthClaims.cs` | Const de claims (scope) |
 | `backedn/tesj-core/Endpoints/UnidadAcademica/UnidadAcademicaController.cs` | Controller de referencia (patrón CanDo) |
+| `backedn/tesj-core/Common/Config/Security/GoogleAuth/*` | Config + exchange (PKCE) + validación id_token + `RegisterGoogleAuthentication` (JWT) |
+| `backedn/tesj-core/Common/Config/Security/Jwt/*` | `JwtSettings` y `JwtTokenService` (emisión HS256) |
+| `backedn/tesj-core/Common/Interfaces/Services/IUserLookupService.cs` | Lookup de usuarios (Google) |
+| `backedn/tesj-core/Endpoints/Auth/AuthController.cs` | `POST /auth/google`, `GET /auth/me` |
+| `backedn/tesj-core/Endpoints/CustomizeUa/` | Dominio de customización por UA (DTOs; module en curso) |
 
 ---
 
@@ -133,9 +146,9 @@ proyecto: tsj-web
 ### 1.1 Auditoría del esquema actual
 
 - [x] Revisar `infra/db.sql` y listar las 16 tablas con sus columnas, tipos y constraints
-- [x] Verificar que el `AppDbContext.cs` refleja correctamente las 11 tablas mapeadas
-- [x] Identificar las 5 tablas NO mapeadas por el backend:
-    - `customization_ua` (banners/FAQs por campus)
+- [x] Verificar que el `AppDbContext.cs` refleja correctamente las tablas mapeadas
+- [x] Identificar las 5 tablas NO mapeadas por el backend (hoy todas tienen modelo EF; 17 DbSets, cobertura 100%):
+    - `customization_ua` (banners/FAQs por campus) — endpoints en curso (`Endpoints/CustomizeUa`)
     - `workshops_ua` (talleres por campus)
     - `staff_workshops_ua` (personal de talleres)
     - `courses_ua` (cursos en línea)
@@ -154,7 +167,7 @@ proyecto: tsj-web
 
 - [x] Agregar `DbSet<User>` al `AppDbContext`
 - [x] Crear modelo `User.cs` en `Data/Models/`
-- [x] Crear script `infra/create-users-table.sql` (role, google_id, email)
+- [x] Tabla `users` (role, google_id, email, ...) — integrada en `infra/db.sql` (en vez del script `create-users-table.sql` aparte)
 
 ### 1.4 Auditoría de datos
 
@@ -174,105 +187,93 @@ proyecto: tsj-web
 ## FASE 2 — Seguridad con Google OAuth2
 
 > **Objetivo:** Reemplazar el cookie anónimo actual con autenticación real vía Google, manteniendo el esquema público como fallback.
-> **Estado: ⏳ Pendiente.**
+> **Estado: ✔ Completa** — flujo PKCE + JWT implementado y compilando; tests verdes (16); pendientes solo externos (redirect URI en consola, rotación de secrets).
 
 ### 2.1 Configuración de Google Cloud Console
 
-- [ ] Crear proyecto en Google Cloud Console (si no existe)
-- [ ] Habilitar People API
-- [ ] Crear credenciales OAuth 2.0 (Client ID + Client Secret)
-- [ ] Configurar URIs de redirección autorizados:
-    - `https://localhost:5001/signin-google` (desarrollo)
-    - `https://<dominio-produccion>/signin-google` (producción)
-- [ ] Guardar Client ID y Client Secret en variables de entorno (nunca en código)
+- [x] Crear proyecto en Google Cloud Console (si no existe)
+- [x] Crear credenciales OAuth 2.0 tipo Web (Client ID + Client Secret)
+- [x] Registrar la URI de redirección del frontend (la envía el frontend en el body de `POST /auth/google`)
+- [x] No requiere People API: los datos vienen del `id_token` de Google
+- [x] Guardar Client ID y Client Secret en variables de entorno (nunca en código)
 
 ### 2.2 Paquetes NuGet
 
-- [ ] Instalar `Microsoft.AspNetCore.Authentication.Google`
-- [ ] Verificar compatibilidad con .NET 10
+- [x] `Microsoft.AspNetCore.Authentication.JwtBearer` (validación del JWT propio)
+- [x] Exchange manual (Authorization Code + PKCE) vía `HttpClient` en `GoogleTokenExchangeService`
+- [x] Verificar compatibilidad con .NET 10
 
 ### 2.3 Configurar Google Auth en el backend
 
-- [ ] Agregar esquema Google en `AuthModule.cs`:
-    ```csharp
-    .AddGoogle(options =>
-    {
-        options.ClientId = config["GoogleAuth:ClientId"];
-        options.ClientSecret = config["GoogleAuth:ClientSecret"];
-        options.CallbackPath = "/signin-google";
-    });
-    ```
-- [ ] Crear `GoogleAuthOptions.cs` en `Common/Config/Security/Models/`
-- [ ] Agregar configuración en `appsettings.json`:
-    ```json
-    "GoogleAuth": {
-        "ClientId": "",
-        "ClientSecret": ""
-    }
-    ```
-- [ ] Mantener esquema `Public` como fallback para endpoints de lectura
-- [ ] Configurar esquema Google como scheme de sesión (`trust`/`session`)
+- [x] Crear `GoogleAuthConfig.cs` (ClientId, ClientSecret, dominios permitidos) en `Common/Config/Security/GoogleAuth/`
+- [x] Crear `JwtSettings.cs` (SigningKey, Issuer, Audience, ExpirationMinutes) en `Common/Config/Security/Jwt/`
+- [x] `RegisterGoogleAuthentication()` en `GoogleAuthentication.cs`: configura opciones, servicios de exchange/validación y `AddJwtBearer(AuthSchemes.Jwt)` (validación local, `MapInboundClaims=false`)
+- [x] Agregar configuración en `appsettings.json` / `appsettings.Development.json`: secciones `GoogleAuth` y `JwtSettings` (valores placeholder)
+- [x] Mantener esquema `Public` (cookie anónimo) como fallback para endpoints de lectura
+- [x] `AuthModule.cs` registra ambos schemes (`Default` + `Jwt`) y las policies por rol los aceptan
 
 ### 2.4 Crear controller de autenticación
 
-- [ ] Crear `AuthController.cs` en `Endpoints/Auth/`
-- [ ] Implementar endpoint `GET /auth/login` → redirige a Google
-- [ ] Implementar endpoint `GET /auth/callback` → procesa respuesta de Google
-- [ ] Implementar endpoint `GET /auth/me` → retorna info del usuario autenticado
-- [ ] Implementar endpoint `POST /auth/logout` → cierra sesión
-- [ ] Implementar endpoint `GET /auth/external-login` → Challenge con Google
+- [x] Crear `AuthController.cs` en `Endpoints/Auth/`
+- [x] `POST /auth/google` → intercambia el código (PKCE), valida el `id_token`, sincroniza el usuario y emite el JWT
+- [x] `GET /auth/me` → retorna info del usuario autenticado (`[Authorize(Policy = AuthPolicies.GoogleUser)]`)
+- [x] (Opcional) `POST /auth/logout` → el frontend descarta el JWT (204 NoContent)
 
-### 2.5 Gestión de sesiones (diseño decidido: cookie firmada)
+> Nota: la redirección a Google la ejecuta el frontend (flujo PKCE); el backend no expone `/auth/login` ni `/auth/callback`.
 
-- [x] Decidir estrategia: **Cookie firmada ASP.NET (Opción A)** — se descarta JWT/refresh
-- [ ] Configurar cookie de autenticación firmada en `AuthModule.cs` (CookieAuthenticationOptions)
-- [ ] Configurar expiración de sesión
-- [ ] Emitir claim `unidad_academica_scope` en el principal (base para Fase 3)
+### 2.5 Gestión de sesiones (diseño decidido: JWT propio)
+
+- [x] Decidir estrategia: **JWT propio (HS256) emitido por tsj-core** tras validar el `id_token` de Google (Authorization Code + PKCE). *Actualiza la decisión previa de cookie firmada.*
+- [x] Configurar `AddJwtBearer(AuthSchemes.Jwt)` con validación local (issuer, audience, signing key, lifetime)
+- [x] Configurar expiración de sesión vía `JwtSettings:ExpirationMinutes`
+- [x] Emitir claim `unidad_academica_scope` en el JWT cuando el usuario tiene `UnidadAcademicaId` (base para Fase 3)
 
 ### 2.6 Modificar handlers existentes
 
-- [x] `PublicAuthHandler.cs` ya asigna solo rol `Public`
-- [ ] Crear `GoogleAuthHandler.cs` o usar handler nativo de ASP.NET
-- [ ] Modificar `AuthSchemes.cs` para agregar scheme Google: `public const string Google = "Google";`
-- [ ] Actualizar `AuthModule.cs` para manejar ambos esquemas (trust/session/google)
-- [ ] Asegurar que endpoints públicos funcionan sin login
+- [x] `AuthHandler.cs` (cookie anónimo) asigna solo rol `Public`
+- [x] No se creó handler propio de Google: se usa el `JwtBearerHandler` nativo con el scheme `AuthSchemes.Jwt`
+- [x] `AuthSchemes.cs` agregó `Jwt = "jwt"` (usuarios autenticados)
+- [x] `AuthModule.cs` maneja ambos esquemas (`Default` cookie + `Jwt`); las policies por rol aceptan ambos
+- [x] Endpoints públicos funcionan sin login
 
 ### 2.7 Sincronización de usuario con BD
 
-- [ ] Al hacer login con Google, crear/actualizar registro en tabla `users`
-- [ ] Asignar rol por defecto `Public` a nuevos usuarios
-- [ ] Almacenar `google_id`, `email`, `display_name`, `avatar_url`
-- [ ] Implementar servicio `UserService.cs` para operaciones CRUD de usuarios
+- [x] `IUserLookupService` / `UserLookupService`: `GetOrCreateGoogleUserAsync` crea/actualiza el registro en `users` al hacer login
+- [x] Asignar rol por defecto `Public` a nuevos usuarios
+- [x] Almacenar `google_id`, `email`, `display_name`, `avatar_url`
+- [ ] (Parcial) `User.cs` ya expone `unidad_academica_id` nullable; falta la migración + FK (Fase 3)
 
 ### 2.8 Configuración de CORS
 
-- [ ] Configurar política CORS en `Program.cs`:
+- [x] Configurar política CORS en `Program.cs` (orígenes desde `Cors:AllowedOrigins`):
     ```csharp
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://tu-dominio.com")
+            policy.WithOrigins("http://localhost:3000", "https://tecmm.mx")
                   .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+                  .AllowAnyMethod();
+            // Sin AllowCredentials: el SPA autentica con JWT (header Authorization), no cookies.
         });
     });
     ```
-- [ ] Aplicar CORS antes de routing
-- [ ] Agregar headers de seguridad (X-Content-Type-Options, X-Frame-Options, etc.)
+- [x] Aplicar CORS antes de routing (`app.UseCors("AllowFrontend")` en `Program.cs`, antes de `UseAuthentication`)
+- [x] ~~Agregar headers de seguridad~~ — **descartado**: `SecurityHeadersMiddleware` eliminado (sin CSP/X-Frame-Options); la seguridad de transporte se delega a Caddy/TLS.
 
 ### 2.9 Variables de entorno
 
-- [ ] Agregar `GoogleAuth__ClientId` y `GoogleAuth__ClientSecret` a `compose.yml`
-- [ ] Agregar a `.env.production`
-- [ ] Verificar que no se commitean secrets
+- [x] Agregar `GoogleAuth__ClientId` y `GoogleAuth__ClientSecret` a `compose.yml` (+ `.env.example`)
+- [x] Agregar `JwtSettings__SigningKey` (>= 32 chars) a `compose.yml` (+ `.env.example`)
+- [x] Retirar `.env` del control de versiones: `git rm --cached` + nuevo `.env.example` con placeholders
+- [ ] **Rotar credenciales** en Google Cloud Console (Client Secret expuesto) y regenerar `JWT_SECRET`
 
 ### 2.10 Validación
 
-- [ ] Probar flujo completo: login → callback → sesión activa → logout
+- [x] Tests unitarios (16 verdes): `JwtTokenService` (claims/sub/scope), `GoogleTokenExchangeService` (envía `code_verifier`), `GoogleAuthConfig` (dominios + redirect whitelist), `RequiredValue`
+- [ ] Probar flujo completo: frontend obtiene el código (PKCE) → `POST /auth/google` → JWT → `GET /auth/me`
 - [ ] Verificar que endpoints públicos siguen funcionando sin auth
-- [ ] Verificar que endpoints protegidos rechazan requests sin sesión
+- [ ] Verificar que endpoints protegidos rechazan requests sin JWT válido
 - [ ] Probar en producción con HTTPS
 
 ---
@@ -298,8 +299,8 @@ proyecto: tsj-web
 
 - [x] Decidir modelo: **columna `role` en `users`** (Opción A simple) — sin tablas pivote `roles/user_roles`
 - [x] Decidir tenancy: 1 usuario → 1 unidad académica → columna `users.unidad_academica_id`
-- [ ] Agregar columna `unidad_academica_id` a `users` (migración + FK)
-- [ ] Seed inicial: creación de unidades académicas y usuarios base
+- [x] Columna `unidad_academica_id` en `users` — ya en `infra/db.sql` con FK `ON DELETE SET NULL`
+- [ ] Poblar `unidad_academica_id` en el login + seed de usuarios base
 
 ### 3.3 Actualizar modelo de roles en backend
 
@@ -311,7 +312,7 @@ proyecto: tsj-web
 
 - [x] `AuthPolicies.cs` con policies por rol (`Public`, `CampusManager`, `Director`, `Admin`)
 - [x] Registrar policies en `AuthModule.cs` (incluye default policy para endpoints no protegidos)
-- [x] Scheme `Public` registrado; `PublicAuthHandler` asigna rol `Public`
+- [x] Scheme `Public` (cookie) registrado; `AuthHandler` asigna rol `Public`
 
 ### 3.5 Autorización por recurso
 
@@ -320,7 +321,8 @@ proyecto: tsj-web
     - `CanRead/CanWrite/CanEdit/CanDelete(user, resourceUaId)` → familias Own/All/base
     - `CanDrop(user)` → solo Admin
 - [x] Registrar `ICanDoService` (scoped) en `AuthModule`
-- [ ] Resolver el scope desde `users.unidad_academica_id` en la sesión (claim `unidad_academica_scope`)
+- [x] El claim `unidad_academica_scope` se emite en el JWT (`JwtTokenService`) cuando el usuario tiene `UnidadAcademicaId` (columna ya en `db.sql`)
+- [ ] Poblar `unidad_academica_id` del usuario en el login
 
 ### 3.6 Aplicar autorización por endpoint
 
@@ -331,7 +333,8 @@ proyecto: tsj-web
 ### 3.7 Control de acceso por campus (tenancy)
 
 - [x] Decidir modelo: usuario ligado a una `unidad_academica` (columna `users.unidad_academica_id`)
-- [ ] Implementar el claim `unidad_academica_scope` en el handler de sesión
+- [x] El claim viaja en el JWT (`JwtTokenService`); la columna `users.unidad_academica_id` ya existe en el esquema
+- [ ] Poblar la columna + prueba end-to-end del alcance (CampusManager 403 en otras UAs)
 - [ ] Verificar que un `CampusManager` solo accede a SU unidad académica (rechazo en otras con `Forbid()` → 403)
 
 ### 3.8 Seeds y gestión de roles
@@ -361,13 +364,13 @@ FASE 1 (Mapeo BD) — ✔ Completa
     └── 1.5: Validación
          │
          ▼
-FASE 2 (Google Auth) — ⏳ Pendiente
+FASE 2 (Google Auth) — ✔ Completa (PKCE + JWT; tests 16)
     │
-    ├── 2.1-2.2: Configuración Google + paquetes
-    ├── 2.3-2.4: Configurar auth + controller
-    ├── 2.5-2.6: Configurar cookie firmada + handlers (PublicAuthHandler ✔)
-    ├── 2.7: Sincronización con BD
-    ├── 2.8-2.9: CORS + variables
+    ├── 2.1-2.2: Configuración Google + paquetes (JwtBearer + exchange manual PKCE)
+    ├── 2.3-2.4: Configurar auth + controller (RegisterGoogleAuthentication + /auth/google, /auth/me ✔)
+    ├── 2.5-2.6: JWT propio + handlers (Public ✔)
+    ├── 2.7: Sincronización con BD ✔
+    ├── 2.8-2.9: CORS ✔ + secrets retirados de git (pendiente solo rotar)
     └── 2.10: Validación
          │
          ▼
@@ -376,7 +379,7 @@ FASE 3 (Permisos y Roles) — 🔄 Parcial
     ├── 3.1-3.4: Roles + matriz + policies (✔ implementado)
     ├── 3.5: CanDoService (✔ implementado; pendiente scope real)
     ├── 3.6: Patrón CanDo en controllers (UnidadAcademica ✔; resto pendiente)
-    ├── 3.7: Tenancy — scope por UA (decidido; pendiente implementación)
+    ├── 3.7: Tenancy — scope por UA (columna en esquema; falta poblar/validar)
     ├── 3.8: Seeds y gestión de roles
     └── 3.9: Validación completa
 ```
