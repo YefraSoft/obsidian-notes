@@ -1,9 +1,11 @@
 ---
-title: Plan por fases - RH Cotla
-project: rh-cotla
-date: 2026-08-25
-type: plan
-status: draft
+tipo: plan
+titulo: "Plan por fases - App RH Cotla"
+autor: "Efraín García"
+creado: 2026-08-25
+actualizado: 2026-09-11
+estado: draft
+proyecto: rh-cotla
 tags:
   - rh-cotla
   - plan

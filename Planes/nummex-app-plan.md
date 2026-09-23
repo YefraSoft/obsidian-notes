@@ -1,4 +1,11 @@
 ---
+tipo: plan
+titulo: "Nummex App — Plan de Desarrollo"
+autor: "Efraín García"
+creado: 2026-09-10
+actualizado: 2026-09-11
+estado: en-progreso
+proyecto: nummex
 tags:
   - nummex
   - plan
@@ -6,9 +13,6 @@ tags:
   - libro-azul
   - api
   - web-app
-created: 2026-09-10
-status: en-progreso
-proyecto: nummex
 ---
 # Nummex App — Plan de Desarrollo
 

@@ -1,3 +1,18 @@
+---
+tipo: manual
+titulo: "Servicio CP — Manual de Uso"
+autor: "Efraín García"
+creado: 2026-09-10
+actualizado: 2026-09-11
+estado: vigente
+tags:
+  - servicio-cp
+  - manual
+  - api
+  - codigos-postales
+  - sepomex
+---
+
 # 📮 Servicio CP — Manual de Uso
 
 > Microservicio REST en **Go** que expone el catálogo oficial de Códigos Postales de México (SEPOMEX) bajo la subruta `/api-cp/`. Soporta la **cascada completa** `Estado → Municipio → Ciudad → Colonia` para selects dinámicos, consulta por CP estilo buscador de direcciones y búsqueda por nombre. **CORS abierto**.

@@ -1,14 +1,17 @@
+---
+tipo: proyecto
+titulo: "Estatus en proyectos a mi cargo"
+autor: "Efraín García"
+creado: 2026-09-17
+actualizado: 2026-09-23
+estado: en-progreso
 tags:
-
-- bolsa
-    
-- convenios
-    
-- backend
-    
-- monitoreo created: 2026-09-17 status: En proceso autor: Efrain Garcia
-    
-
+  - estatus
+  - proyectos
+  - bolsa
+  - convenios
+  - backend
+  - monitoreo
 ---
 
 # Estatus en proyectos a mi cargo

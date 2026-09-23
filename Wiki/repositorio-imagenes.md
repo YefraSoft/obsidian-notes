@@ -1,4 +1,11 @@
 ---
+tipo: wiki
+titulo: "Repositorio de imágenes"
+autor: "Efraín García"
+creado: 2026-09-21
+actualizado: 2026-09-21
+estado: vigente
+proyecto: tecmm
 tags:
   - imagenes
   - cdn
@@ -6,8 +13,6 @@ tags:
   - assets
   - referencia
   - catalogo
-created: 2026-09-21
-status: vigente
 ---
 
 # Repositorio de imágenes

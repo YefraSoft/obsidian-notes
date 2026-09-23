@@ -1,4 +1,11 @@
 ---
+tipo: plan
+titulo: "TSJ-Web — Plan de Desarrollo"
+autor: "Efraín García"
+creado: 2026-09-09
+actualizado: 2026-09-17
+estado: en-progreso
+proyecto: tsj-web
 tags:
   - tsj-web
   - plan
@@ -6,9 +13,6 @@ tags:
   - seguridad
   - google-auth
   - roles
-created: 2026-09-09
-status: en-progreso
-proyecto: tsj-web
 ---
 # TSJ-Web — Plan de Desarrollo
 

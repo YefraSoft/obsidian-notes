@@ -1,11 +1,15 @@
 ---
+tipo: proyecto
+titulo: "Acuerdos del equipo — Pendientes"
+autor: "Efraín García"
+creado: 2026-09-21
+actualizado: 2026-09-21
+estado: vigente
 tags:
   - acuerdos
   - pendientes
   - equipo
-  - NextCloud
-created: 2026-09-21
-autor: Efraín García
+  - nextcloud
 ---
 
 # Acuerdos del equipo — Pendientes

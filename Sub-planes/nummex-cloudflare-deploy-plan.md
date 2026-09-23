@@ -1,14 +1,20 @@
 ---
+tipo: sub-plan
+titulo: "Nummex — Despliegue de Pruebas con Cloudflare"
+autor: "Efraín García"
+creado: 2026-09-10
+actualizado: 2026-09-11
+estado: pendiente
+proyecto: nummex
+padre: "[[nummex-app-plan]]"
 tags:
   - nummex
   - plan
+  - sub-plan
   - infraestructura
   - cloudflare
   - caddy
   - ssh
-created: 2026-09-10
-status: pendiente
-proyecto: nummex
 ---
 # Nummex — Despliegue de Pruebas con Cloudflare
 

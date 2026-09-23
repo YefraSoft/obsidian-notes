@@ -1,15 +1,20 @@
 ---
+tipo: sub-plan
+titulo: "Nummex Agent — Plan de Desarrollo RAG"
+autor: "Efraín García"
+creado: 2026-09-10
+actualizado: 2026-09-10
+estado: en-progreso
+proyecto: nummex
+padre: "[[nummex-app-plan]]"
 tags:
   - nummex
   - plan
+  - sub-plan
   - agent
   - rag
   - ia
   - whatsapp
-created: 2026-09-10
-updated: 2026-09-10
-status: fase-3-completada-pendiente-e2e-docker
-proyecto: nummex
 ---
 # Nummex Agent — Plan de Desarrollo RAG
 

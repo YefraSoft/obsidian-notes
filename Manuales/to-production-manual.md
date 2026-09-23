@@ -1,4 +1,10 @@
 ---
+tipo: manual
+titulo: "Manual de despliegue — to-production.sh"
+autor: "Efraín García"
+creado: 2026-09-18
+actualizado: 2026-09-18
+estado: vigente
 tags:
   - devops
   - deploy
@@ -8,8 +14,6 @@ tags:
   - versionado
   - manual
   - guia
-created: 2026-09-18
-status: vigente
 ---
 
 # Manual de despliegue — `to-production.sh`

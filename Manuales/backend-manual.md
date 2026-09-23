@@ -1,4 +1,11 @@
 ---
+tipo: manual
+titulo: "Manual del Backend — tsj-core"
+autor: "Efraín García"
+creado: 2026-09-18
+actualizado: 2026-09-18
+estado: vigente
+proyecto: tsj-web
 tags:
   - tsj-web
   - backend
@@ -7,9 +14,6 @@ tags:
   - cache
   - rate-limiting
   - seguridad
-created: 2026-09-18
-status: vigente
-proyecto: tsj-web
 ---
 # Manual del Backend — `tsj-core`
 
