@@ -1,13 +1,20 @@
-# AGENTS — Raíz de la bóveda Obsidian
+# AGENTS
 
 > Norma de trabajo para **esta bóveda de documentación** y para los **proyectos de código** que la acompañan. Léelo completo antes de crear, mover o editar cualquier nota.
 
 ## Ubicación y contexto
 
-- Bóveda: `/Users/efraintics/Documents/Obsidian Vault/` (repo git, bajo `Documents/Obsidian Vault`).
+- Bóveda Local: `/Users/efraintics/Documents/Obsidian Vault/` (repo git, bajo `Documents/Obsidian Vault`). Organización **por clase**.
+- Bóveda Cloud (Nextcloud): `/Users/efraintics/Library/CloudStorage/Nextcloud-cloud.tecmm.mx-punketos` (cuenta `efraintics@Tics-Efrain-Docs`). Organización **por dominio**. Mapa en `Wiki/mapa-de-bovedas-wiki.md`.
 - Las notas se organizan **por clase** en carpetas (ver esquema abajo).
 - Las plantillas están en `plantillas/` y tienen su propio `plantillas/AGENTS.md`.
 - Los proyectos de código viven fuera de la bóveda (p. ej. `/Users/efraintics/proyects/pase-directo/`) y sus entregables se documentan aquí.
+## Reglas
+
+- No tocar git en este repositorio a menos de que sea implicito
+- No eliminar nada sin autorización
+- Verificar si la nueva nota existe en NextCloud
+- Toda modificación en la bóveda local (crear, editar, mover, eliminar) debe sincronizarse en la Bóveda Cloud antes de cerrar la tarea; el mapa de rutas vive en `Wiki/mapa-de-bovedas-wiki.md`
 
 ---
 
@@ -102,4 +109,5 @@ Antes de terminar una tarea sobre la bóveda:
 - [ ] La nota está en la carpeta de su clase.
 - [ ] Sub-planes con `padre:` correcto.
 - [ ] Enlaces `[[...]]` no rotos (por nombre).
+- [ ] Cambios sincronizados en la Bóveda Cloud (Nextcloud).
 - [ ] Git: cambios versionados (el vault es repo).

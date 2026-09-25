@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Manuales/servicio-cp-manual.md",
+                "file": "Sub-planes/pase-directo-api-aspirantes-sub-plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "servicio-cp-manual"
+              "title": "pase-directo-api-aspirantes-sub-plan"
             }
           }
         ]
@@ -190,6 +190,14 @@
   },
   "active": "985ee18c3627eddd",
   "lastOpenFiles": [
+    "Manuales/pase-directo-reglas-negocio-registro-aspirantes-manual.md",
+    "Sub-planes/pase-directo-api-aspirantes-sub-plan.md",
+    "AGENTS.md",
+    "plantillas/AGENTS.md",
+    "<plan-padre>.md",
+    "Manuales/news-service-manual.md",
+    "Wiki/mapa-de-bovedas-wiki.md",
+    "Manuales/servicio-cp-manual.md",
     "Manuales/backend-manual.md",
     "Metodología/Metodología-Second-Brain.md",
     "plantillas/Template-Wiki.md",
@@ -198,12 +206,9 @@
     "plantillas/Template-Plan-de-trabajo.md",
     "plantillas/Template-Metodologia.md",
     "plantillas/Template-Manual.md",
-    "plantillas/AGENTS.md",
     "Sub-planes/nummex-cloudflare-deploy-plan.md",
     "Sub-planes/nummex-agent-rag-plan.md",
     "Wiki/repositorio-imagenes.md",
-    "AGENTS.md",
-    "<plan-padre>.md",
     "plantillas",
     "Metodología",
     "Proyectos/proyectos.md",
@@ -216,12 +221,7 @@
     "Planes/Tsj-Web-plan-desarollo.md",
     "Planes",
     "Manuales/to-production-manual.md",
-    "Manuales/servicio-cp-manual.md",
     "Manuales",
-    "repositorio-imagenes.md",
-    "to-production-manual.md",
-    "servicio-cp-manual.md",
-    "proyectos.md",
-    "rh-cotla-plan.md"
+    "repositorio-imagenes.md"
   ]
 }
