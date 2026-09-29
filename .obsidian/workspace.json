@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Sub-planes/pase-directo-api-aspirantes-sub-plan.md",
+                "file": "Manuales/tsj-web-api-frontend-manual.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "pase-directo-api-aspirantes-sub-plan"
+              "title": "tsj-web-api-frontend-manual"
             }
           }
         ]
@@ -191,6 +191,7 @@
   "active": "985ee18c3627eddd",
   "lastOpenFiles": [
     "Manuales/pase-directo-reglas-negocio-registro-aspirantes-manual.md",
+    "Manuales/tsj-web-api-frontend-manual.md",
     "Sub-planes/pase-directo-api-aspirantes-sub-plan.md",
     "AGENTS.md",
     "plantillas/AGENTS.md",
@@ -221,7 +222,6 @@
     "Planes/Tsj-Web-plan-desarollo.md",
     "Planes",
     "Manuales/to-production-manual.md",
-    "Manuales",
-    "repositorio-imagenes.md"
+    "Manuales"
   ]
 }

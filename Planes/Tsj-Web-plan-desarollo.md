@@ -33,6 +33,7 @@ tags:
 - [ ] Poblar `users.unidad_academica_id` en el login (la columna ya está en el esquema) + tenancy (Fase 3)
 - [ ] Terminar dominio `CustomizationUa` (verifier + services + controller)
 - [ ] **Ban de UA (Fase 3)**: columna `disabled` ya en el esquema; definir endpoint ban/unban (soft vía `DeleteAll`) + filtro en GET públicos
+- [ ] Validar en ambiente integrado el flujo de Aspirantes: RENAPO → token Redis → alta EDCORE → login CURP/contraseña → cambio de procedimiento propio → recuperación SMTP.
 
 ## Estado Actual (resumen ejecutivo)
 
@@ -278,6 +279,20 @@ tags:
 - [ ] Probar flujo completo: frontend obtiene el código (PKCE) → `POST /auth/google` → JWT → `GET /auth/me`
 - [ ] Verificar que endpoints públicos siguen funcionando sin auth
 - [ ] Verificar que endpoints protegidos rechazan requests sin JWT válido
+
+---
+
+## Autenticación de Aspirantes
+
+> **Estado: 🔄 En implementación** — el alta, login y JWT de Aspirante existen; falta validar integración con dependencias reales y configurar recuperación SMTP.
+
+- [x] Prevalidar CURP contra EDCORE y RENAPO, emitiendo un token Redis opaco, de un solo uso y con TTL de 12 minutos.
+- [x] Registrar Aspirante solo con token válido; volver a consultar EDCORE antes de insertar y rechazar cambios de estado o duplicados.
+- [x] Emitir JWT de Aspirante tras alta o login CURP/contraseña, con permisos únicamente sobre el propio registro.
+- [x] Permitir el cambio de procedimiento exclusivamente desde una sesión autenticada del Aspirante (`EditOwn`).
+- [x] Implementar recuperación por correo: token Redis de un solo uso, TTL de 15 minutos y actualización de contraseña en EDCORE.
+- [ ] Configurar por entorno EDCORE, Redis, RENAPO, JWT, SMTP y `AspirantePasswordRecovery:FrontendResetUrl`.
+- [ ] Ejecutar prueba end-to-end con SMTP de pruebas y el frontend de restablecimiento.
 - [ ] Probar en producción con HTTPS
 
 ---

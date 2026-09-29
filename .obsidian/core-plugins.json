@@ -11,9 +11,7 @@
   "properties": true,
   "page-preview": true,
   "daily-notes": true,
-  "templates": {
-    "folder": "plantillas"
-  },
+  "templates": true,
   "note-composer": true,
   "command-palette": true,
   "slash-command": false,
