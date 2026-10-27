@@ -935,7 +935,7 @@ Un **servicio desplegable** organizado en **módulos internos** (más sencillo d
 
 ## Arquitectura y Notas Técnicas
 
-Detalle completo en `arquitectura` §2 a §5. Resumen:
+Detalle completo en `arquitectura` §2 a §5 y en [[sso-diagramas-wiki]] (diagramas). Resumen:
 
 - **Interfaces del SSO:** Acceso (público: login, 2FA, recuperación, crear contraseña) y Consola (mis datos, administración y dashboard según el rol).
 - **Despliegue bajo un solo dominio:** `/` (Acceso estático), `/consola/*` (estático), `/connect/*` (OpenIddict), `/api/*` (API), `/hubs/*` (SignalR). Sin problemas de CORS ni cookies entre dominios.
@@ -954,7 +954,7 @@ Detalle completo en `arquitectura` §2 a §5. Resumen:
 - `requerimientos/planing front end.md` (v0.2): decisión de frontend y plan de islas.
 - `requerimientos/SISTEMA-DE-DISENO.md`: componentes, tokens y definición de terminado.
 - `backlog-sso.md` y `sprints.md`: historias, prioridades y sprints (requieren actualización).
-- `diagramas-sso.md`: diagramas Mermaid de flujos.
+- [[sso-diagramas-wiki]]: diagramas Mermaid de arquitectura y de flujos (copia de `diagramas-sso.md`).
 - `~/Documents/Developer/mitsj-ui`: librería de componentes.
 - `~/Documents/Developer/SSO`: carpeta de documentos del SSO (sin código).
 
