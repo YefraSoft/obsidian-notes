@@ -3,7 +3,7 @@ tipo: wiki
 titulo: "Mapa de bóvedas"
 autor: "Efraín García"
 creado: 2026-09-24
-actualizado: 2026-09-24
+actualizado: 2026-10-27
 estado: vigente
 tags:
   - wiki
@@ -37,15 +37,16 @@ tags:
 ```
 Obsidian Vault/
 ├── AGENTS.md
-├── <plan-padre>.md              (placeholder huérfano en la raíz)
 ├── Manuales/                    [manual]
 │   ├── backend-manual.md
+│   ├── cdn-service-manual.md
 │   ├── news-service-manual.md
 │   ├── servicio-cp-manual.md
 │   └── to-production-manual.md
 ├── Metodología/                 [metodologia]
 │   └── Metodología-Second-Brain.md
 ├── Planes/                      [plan]
+│   ├── email-service-plan.md
 │   ├── nummex-app-plan.md
 │   ├── rh-cotla-plan.md
 │   └── Tsj-Web-plan-desarollo.md
@@ -61,8 +62,18 @@ Obsidian Vault/
 │   ├── Proyecto.md
 │   └── proyectos.md
 ├── Sub-planes/                  [sub-plan]
+│   ├── email-service-auth-sub-plan.md
+│   ├── email-service-consumidores-keys-sub-plan.md
+│   ├── email-service-contactos-sub-plan.md
+│   ├── email-service-envio-grupal-sub-plan.md
+│   ├── email-service-envio-individual-sub-plan.md
+│   ├── email-service-grupos-sub-plan.md
+│   ├── email-service-plantillas-sub-plan.md
+│   ├── email-service-seguimiento-bajas-sub-plan.md
+│   ├── email-service-sync-core-sub-plan.md
 │   ├── nummex-agent-rag-plan.md
-│   └── nummex-cloudflare-deploy-plan.md
+│   ├── nummex-cloudflare-deploy-plan.md
+│   └── pase-directo-api-aspirantes-sub-plan.md
 └── Wiki/                        [wiki]
     └── repositorio-imagenes.md
 ```
@@ -71,12 +82,12 @@ Obsidian Vault/
 
 | Clase | Carpeta | Notas |
 |-------|---------|-------|
-| `manual` | `Manuales/` | 4 |
+| `manual` | `Manuales/` | 5 |
 | `metodologia` | `Metodología/` | 1 |
-| `plan` | `Planes/` | 3 |
+| `plan` | `Planes/` | 4 |
 | `plantillas` | `plantillas/` | 7 (6 templates + AGENTS) |
 | `proyecto` | `Proyectos/` | 2 |
-| `sub-plan` | `Sub-planes/` | 2 |
+| `sub-plan` | `Sub-planes/` | 12 |
 | `wiki` | `Wiki/` | 1 (+ esta) |
 
 ## 2. Bóveda cloud
@@ -117,6 +128,7 @@ Nextcloud-cloud.tecmm.mx-punketos/
 │   ├── Migracion Edcore/
 │   ├── Pagos/                      (insumos/)
 │   ├── Plazas/                     (data/ 0.0.1 y 1.0.0)
+│   ├── Servicio de correo/         (plan y sub-planes de email-service)
 │   ├── Portal de noticias/         (manual-news-service.md)
 │   ├── Portal Institucional/       (Backend/, Frontend/, Minutas/)
 │   ├── Portal web/

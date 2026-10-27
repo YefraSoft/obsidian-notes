@@ -17,7 +17,7 @@ tags:
 
 # Registro de Aspirantes + EDCORE (SITEM-12)
 
-> API de registro de aspirantes con EDCORE (MariaDB CORE). El flujo vigente separa prevalidación, alta, sesión interna y cambio de procedimiento. Contrato funcional: [[pase-directo-reglas-negocio-registro-aspirantes-manual]].
+> API de registro de aspirantes con EDCORE (MariaDB CORE). El flujo vigente separa prevalidación, alta, sesión interna y cambio de procedimiento. Contrato funcional: [[backend-manual]].
 
 ## Alcance
 
@@ -218,5 +218,4 @@ Env vars requeridas en `tsj-web/.env.example` y `compose.yml`: `EDCORE_HOST`, `E
 ## Relacionado
 
 - [[Tsj-Web-plan-desarollo]]
-- [[pase-directo-reglas-negocio-registro-aspirantes-manual]]
 - [[backend-manual]]

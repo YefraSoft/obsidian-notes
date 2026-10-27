@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "AGENTS.md",
+                "file": "Planes/email-service-plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "AGENTS"
+              "title": "email-service-plan"
             }
           }
         ]
@@ -83,7 +83,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 270.64453125
+    "width": 385.546875
   },
   "right": {
     "id": "40304395a4f0198b",
@@ -190,38 +190,38 @@
   },
   "active": "985ee18c3627eddd",
   "lastOpenFiles": [
-    "plantillas/AGENTS.md",
-    "AGENTS.md",
-    "Manuales/tsj-web-api-frontend-manual.md",
-    "Manuales/pase-directo-reglas-negocio-registro-aspirantes-manual.md",
-    "Sub-planes/pase-directo-api-aspirantes-sub-plan.md",
-    "<plan-padre>.md",
-    "Manuales/news-service-manual.md",
-    "Wiki/mapa-de-bovedas-wiki.md",
-    "Manuales/servicio-cp-manual.md",
-    "Manuales/backend-manual.md",
-    "Metodología/Metodología-Second-Brain.md",
-    "plantillas/Template-Wiki.md",
-    "plantillas/Template-Sub-plan.md",
-    "plantillas/Template-Proyecto.md",
-    "plantillas/Template-Plan-de-trabajo.md",
-    "plantillas/Template-Metodologia.md",
-    "plantillas/Template-Manual.md",
-    "Sub-planes/nummex-cloudflare-deploy-plan.md",
-    "Sub-planes/nummex-agent-rag-plan.md",
-    "Wiki/repositorio-imagenes.md",
-    "plantillas",
-    "Metodología",
+    "Sub-planes/email-service-auth-sub-plan.md",
+    "Planes/email-service-plan.md",
     "Proyectos/proyectos.md",
     "Proyectos/Proyecto.md",
+    "Manuales/news-service-manual.md",
+    "Sub-planes/email-service-seguimiento-bajas-sub-plan.md",
+    "Sub-planes/email-service-envio-grupal-sub-plan.md",
+    "Sub-planes/email-service-envio-individual-sub-plan.md",
+    "Sub-planes/email-service-grupos-sub-plan.md",
+    "Sub-planes/email-service-contactos-sub-plan.md",
+    "Sub-planes/email-service-sync-core-sub-plan.md",
+    "Sub-planes/email-service-plantillas-sub-plan.md",
+    "Sub-planes/email-service-consumidores-keys-sub-plan.md",
+    "Manuales/backend-manual.md",
+    "Manuales/cdn-service-manual.md",
+    "Manuales/to-production-manual.md",
+    "plantillas/AGENTS.md",
+    "plantillas/Template-Manual.md",
+    "plantillas/Template-Metodologia.md",
+    "plantillas/Template-Plan-de-trabajo.md",
+    "plantillas/Template-Proyecto.md",
+    "plantillas/Template-Sub-plan.md",
+    "plantillas/Template-Wiki.md",
+    "Manuales/servicio-cp-manual.md",
+    "AGENTS.md",
+    "Manuales/tsj-web-api-frontend-manual.md",
+    "plantillas",
+    "Metodología",
     "Proyectos",
     "Wiki",
     "Sub-planes",
-    "Planes/rh-cotla-plan.md",
-    "Planes/nummex-app-plan.md",
-    "Planes/Tsj-Web-plan-desarollo.md",
     "Planes",
-    "Manuales/to-production-manual.md",
     "Manuales"
   ]
 }
