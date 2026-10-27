@@ -59,15 +59,15 @@ tags:
 
 ## 3. Capas de un endpoint: qué hace cada pieza
 
-| Pieza | Responsabilidad |
-|-------|-----------------|
-| **Controller** | HTTP: bind, política de rol, `Actor.From`, `Results.*`. No toca el `DbContext` |
-| **Service** | Reglas de negocio, `Can/Require`, excepciones de dominio, un `CommitAsync` por caso de uso |
-| **Queries** | Lecturas y listas paginadas |
-| **Repository** | Consultas por intención (`NameExistsAsync`, `FindAsync`, `ListAsync`); sin genéricos ni `IQueryable` expuesto |
+| Pieza                  | Responsabilidad                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Controller**         | HTTP: bind, política de rol, `Actor.From`, `Results.*`. No toca el `DbContext`                                    |
+| **Service**            | Reglas de negocio, `Can/Require`, excepciones de dominio, un `CommitAsync` por caso de uso                        |
+| **Queries**            | Lecturas y listas paginadas                                                                                       |
+| **Repository**         | Consultas por intención (`NameExistsAsync`, `FindAsync`, `ListAsync`); sin genéricos ni `IQueryable` expuesto     |
 | **`IDataTransaction`** | Confirma la transacción del caso de uso (`CommitAsync`) y traduce la unicidad de Postgres a `InConflictException` |
-| **`IResponseBuilder`** | Proyección de EF a respuesta (`.Select(builder.Projection)`) |
-| **Data** | `EmailDbContext` y entidades |
+| **`IResponseBuilder`** | Proyección de EF a respuesta (`.Select(builder.Projection)`)                                                      |
+| **Data**               | `EmailDbContext` y entidades                                                                                      |
 
 Todo punto de entrada (controller REST, resolver GraphQL, consumidor de RabbitMQ) es un **adaptador**: solo traduce y delega a un servicio o a las queries.
 
@@ -81,8 +81,9 @@ Todo punto de entrada (controller REST, resolver GraphQL, consumidor de RabbitMQ
 
 ## 5. Seguridad y acceso
 
-- Una sola cabecera `X-Api-Key`: el administrador se reconoce por igualdad con el secreto de OpenBao; el consumidor, por el SHA-256 de su key en `keys`.
-- Roles `ConsumerRole` (`Sender`, `GroupSender`, `GroupManager`, `TemplateManager`), planos y combinables, en `consumer.capabilities` (libre en la base); el administrador tiene `Admin` más los de `Auth:AdminRoles`.
+- Tres identidades con una sola cabecera `X-Api-Key`: **Admin** (igualdad con el secreto de OpenBao), **Consumer** (app, backend a backend) y **Manager** (persona con email que administra contactos; sin contraseña, usa su key). Son dominios separados: tablas `consumer` y `manager`, cada una con su tabla de keys (`consumer_keys`, `manager_keys`).
+- La key es un token cifrado y autenticado (AES-256-GCM) que lleva el dominio, el id de la key y el del dueño: al descifrarla se sabe a qué tabla ir (una sola consulta). Una key alterada se rechaza sin tocar la base; si es válida, la base manda (SHA-256, revocada, vencida, dueño inactivo). **Una sola key vigente por dueño**: rotar reemplaza la anterior al instante; `expire_at` opcional para keys temporales.
+- Roles `ConsumerRole` planos y combinables, en `capabilities`, **por dominio sin mezcla**: Consumer → `Sender`, `GroupSender`; Manager → `GroupManager`, `TemplateManager`. El administrador tiene `Admin` más los de `Auth:AdminRoles`.
 - Una política de autorización por rol; un consumidor que llama a una ruta de gestión recibe el mismo 401 que con una key inválida.
 - Protocolo `CanX` (bool) / `RequireX` (lanza) con matriz de dos capas: rol + alcance por recurso (`consumer_group_roles`, `consumer_templates`).
 - `messages/*` es consulta interna: solo `GroupManager` y Admin. Los consumidores no conocen estados internos.
@@ -186,7 +187,9 @@ flowchart TD
     REQ["Petición con X-Api-Key"] --> RL["Rate limiting"]
     RL --> AUTH{"ApiKeyAuthenticationHandler"}
     AUTH -->|"igual a ADMIN_API_KEY"| ADM["Claims: Admin + Auth:AdminRoles"]
-    AUTH -->|"SHA-256 en keys vigente y consumidor activo"| CON["Claims: capabilities ∩ ConsumerRole"]
+    AUTH -->|"descifra la key (dominio + ids)"| DEC{"¿íntegra?"}
+    DEC -->|"alterada"| F401
+    DEC -->|"consumer o manager: una consulta a su tabla de keys<br/>(SHA-256, vigente, dueño activo)"| CON["Claims: dominio + roles válidos del dominio"]
     AUTH -->|"no coincide"| F401["401"]
     ADM --> POL{"Política de rol"}
     CON --> POL
@@ -240,7 +243,8 @@ sequenceDiagram
 
 # Pendientes
 
-- [ ] Migrar el panel a `/whoami`, a leer `errors` y a pedir la lista de consumidores por GraphQL (Slice 1 y 2); la arquitectura del panel se define con la app de ejemplo que dará Efraín.
+- [ ] **Fase 0 temporal** — dominios Consumer y Manager, key cifrada y una key por dueño: [[email-service-fase0-temporal]]. Se borra al terminar.
+- [ ] Migrar el panel a `/whoami`, a leer `errors`, a la lista por GraphQL y a los dos dominios; su arquitectura toma como ejemplo el frontend de `bolsa-trabajo-tsj` (ver `AGENTS.md`).
 - [ ] Terminar la Fase 1; después Efraín empieza los tests (la carpeta `EmailSendService.Tests/` se queda).
 
 # Estado Actual (resumen ejecutivo)
@@ -250,7 +254,8 @@ sequenceDiagram
 | Infra: compose, `make env/init/up`, OpenBao (AppRole) | ✅ |
 | Errores: `DomainException`, ProblemDetails con `code` y `traceId`, nivel de log por clase | ✅ |
 | Rate limiting: Relaxed / Moderate / Strict, global para lo no declarado | ✅ |
-| Autenticación: `X-Api-Key` única, `GET /whoami`, admin por OpenBao | ✅ |
+| Autenticación: `X-Api-Key` única, `GET /whoami`, admin por OpenBao | ✅ (cambia en la Fase 0 temporal: key cifrada con su dominio) |
+| Dominios Consumer y Manager con keys separadas y una key vigente por dueño | ⏳ Fase 0 temporal |
 | Roles, políticas por rol, `Auth:AdminRoles` con `IOptions` | ✅ |
 | Protocolo `Can` / `Require` y matriz `consumer_group_roles` | ✅ (sin endpoints que lo usen aún) |
 | Gestión de consumidores y keys (API) | ✅ por capas (servicios, queries y repositorios); lista por GraphQL |
@@ -263,8 +268,8 @@ sequenceDiagram
 
 | Fase / Slice | Dominio | Estado |
 |--------------|---------|--------|
-| 1 | Auth (aceptar la API key) — [[email-service-auth-sub-plan]] | 🔄 en progreso (API lista; falta el panel) |
-| 2 | Consumidores y keys — [[email-service-consumidores-keys-sub-plan]] | 🔄 en progreso (API lista; falta el panel) |
+| 1 | Auth (key cifrada con su dominio: Admin, Consumer, Manager) — [[email-service-auth-sub-plan]] | 🔄 en progreso ([[email-service-fase0-temporal]]; falta el panel) |
+| 2 | Consumidores, managers y keys — [[email-service-consumidores-keys-sub-plan]] | 🔄 en progreso ([[email-service-fase0-temporal]]; falta el panel) |
 | 3 | Plantillas — [[email-service-plantillas-sub-plan]] | ⏳ Pendiente |
 | 4 | Sincronización con el Core — [[email-service-sync-core-sub-plan]] | ⏳ Pendiente |
 | 5 | Contactos — [[email-service-contactos-sub-plan]] | ⏳ Pendiente |
@@ -280,7 +285,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 1. Clean Architecture adaptada y SOLID, con dependencias hacia adentro (regla 1 y 2).
 2. Controller → service → repository → data; servicios y queries separados; `IDataTransaction` por caso de uso (regla 3).
 3. REST para lo simple y las escrituras; GraphQL.NET para listas grandes (regla 4).
-4. Una sola `X-Api-Key`; roles como enum con `capabilities` libre; matriz de dos capas; `messages/*` interno (regla 5).
+4. Una sola `X-Api-Key` cifrada con su dominio (Admin, Consumer, Manager); una key vigente por dueño; roles por dominio sin mezcla; matriz de dos capas; `messages/*` interno (regla 5).
 5. El nivel de log vive en la clase base de cada excepción (regla 6).
 6. Validación nativa y respuestas por `IResponseBuilder` (regla 7).
 7. El worker es dueño del registro del mensaje (regla 8).
@@ -328,7 +333,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 
 # FASE 1 — Auth y consumidores (Slices 1 y 2)
 
-> **Objetivo:** que la API acepte la API key con sus roles y que el administrador gestione consumidores y keys desde el panel.
+> **Objetivo:** que la API acepte la API key (cifrada con su dominio: Admin, Consumer o Manager) con sus roles y que el administrador gestione consumidores, managers y keys desde el panel.
 > **Estado:** 🔄 En progreso — [[email-service-auth-sub-plan]] y [[email-service-consumidores-keys-sub-plan]].
 
 # FASE 2 — Datos maestros (Slices 3 a 6)

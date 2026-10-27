@@ -1,6 +1,6 @@
 ---
 tipo: sub-plan
-titulo: Slice 2 — Consumidores y keys
+titulo: Slice 2 — Consumidores, managers y keys
 autor: Efraín García
 creado: 2026-10-27
 actualizado: 2026-10-27
@@ -11,84 +11,78 @@ tags:
   - email-service
   - sub-plan
   - consumidores
+  - managers
   - keys
   - slice-2
 ---
 
-# Slice 2 — Consumidores y keys
+# Slice 2 — Consumidores, managers y keys
 
 > **Plan padre:** [[email-service-plan]]
-> Que el administrador cree consumidores con sus roles, genere y revoque keys y los gestione desde el panel.
+> Que el administrador cree consumidores (apps) y managers (personas con email) con los roles de su dominio, genere o rote su key y los gestione desde el panel. La base del modelo se construye en [[email-service-fase0-temporal]].
 
 ## Pendientes
 
-- [ ] Activar y desactivar un consumidor (`active`).
-- [ ] Editar los roles (`capabilities`) de un consumidor.
-- [ ] `GET /consumers/{id}`.
-- [ ] Vencimiento de la key elegible desde la pantalla.
-- [ ] Mostrar los errores de validación por campo.
-- [ ] Política de rotación: nueva key y vencimiento de la anterior.
-- [ ] Tope de keys activas por consumidor.
+- [ ] Fase 0 temporal: dominios, key cifrada y una key por dueño ([[email-service-fase0-temporal]]).
+- [ ] `PATCH /consumers/{id}` y `PATCH /managers/{id}`: `active` y roles (validados contra el dominio).
+- [ ] Rotar la key (`POST …/{id}/key`) con `expireAt` opcional y revocarla (`POST …/{id}/key/revoke`).
+- [ ] Listas por GraphQL con `filter` (nombre o email) y `orderBy`.
+- [ ] Panel: pantallas de consumidores y managers (alta, activar/desactivar, roles, rotar key con vencimiento, errores por campo).
 
 ## Estado Actual
 
 | Área | Estado |
 |------|--------|
-| `GET /consumers` (con keys, sin hashes) | ✅ |
-| `POST /consumers` (nombre + roles, primera key en claro) | ✅ |
-| `POST /consumers/{id}/keys` (con `expireAt` opcional) | ✅ |
-| `POST /keys/{id}/revoke` (idempotente) | ✅ |
+| `POST /consumers` (nombre + roles, key en claro una sola vez) | ✅ |
+| `GET /consumers/{id}` | ✅ |
+| Lista de consumidores por GraphQL (paginada) | ✅ |
 | Validación nativa del nombre y los roles | ✅ |
-| Panel: alta de consumidor, nueva key y revocar | ✅ |
-| Activar/desactivar, editar roles y detalle | ⏳ |
+| `POST /consumers/{id}/keys` y `POST /keys/{id}/revoke` | ✅ (se reemplazan por rotar/revocar por dominio) |
+| Dominio Manager (tablas, servicios, rutas, GraphQL) | ⏳ Fase 0 temporal |
+| Una key vigente por dueño y rotación que reemplaza al instante | ⏳ Fase 0 temporal |
+| Activar/desactivar y editar roles (`PATCH`) | ⏳ |
+| Filtro y orden en GraphQL | ⏳ |
+| Panel | ⚠ desalineado con la API; pendiente de migrar |
 
 ## Alcance
 
-Cubre consumidores y keys y su pantalla de administración. No cubre la asignación de plantillas (Slice 3) ni de grupos (Slice 6); esas pantallas se agregan en sus slices.
+Cubre consumidores, managers y sus keys, y su pantalla de administración. No cubre la asignación de plantillas (Slice 3) ni de grupos (Slice 6); esas se agregan en sus slices, enlazadas al dueño que corresponda.
 
 ## Forma de trabajo
 
-Sigue las **Reglas de Trabajo** de [[email-service-plan]] y se construye sobre `ConsumerService`, `KeyService`, `ConsumerQueries` y sus repositorios. La **lista de consumidores va por GraphQL**; `GET /consumers/{id}` y las escrituras, por REST.
+Sigue las **Reglas de Trabajo** de [[email-service-plan]]: un servicio por agregado (`ConsumerService`, `ManagerService`, servicios de keys por dominio), `Queries` para lecturas, repositorios por dominio. La **lista va por GraphQL**; GET por id y escrituras, por REST. Rotar es reemplazar: la key anterior se revoca en el acto y el consumidor se actualiza por su cuenta; `expire_at` opcional para keys temporales (por ejemplo, una campaña).
 
 ## Implementación
 
 ### Paso 1 — Base de datos
-- [x] Tablas `consumer` y `keys` ya definidas.
-- [ ] Nada que migrar para activar/desactivar (la columna `active` existe).
+- [ ] `consumer`, `manager`, `consumer_keys` y `manager_keys` en `infra/db.sql`, con índice único parcial por dueño (`WHERE revoked_at IS NULL`).
 
 ### Paso 2 — API
-- [x] `ConsumerController`, `KeyController`, `Contracts` y `Builders` en `Api/Endpoints/Admin`.
-- [ ] `PATCH /consumers/{id}` para `active` y roles (validados con `IsEnumList`).
-- [ ] `GET /consumers/{id}` en REST y la lista de consumidores por GraphQL (paginada, con filtro por nombre y orden).
-- [ ] Regla de rotación y tope de keys activas.
-- [ ] Un consumidor con mensajes o lotes no se borra: se desactiva.
+- [x] `ConsumerController`, `KeyController`, servicios, queries, contratos y builders por capas.
+- [ ] `ManagerController`, `PATCH` por dominio, rotar y revocar por dominio.
+- [ ] GraphQL: `consumers` y `managers` con `filter` y `orderBy`.
+- [ ] Un consumidor o manager con mensajes o lotes no se borra: se desactiva.
 
 ### Paso 3 — Panel
-- [x] Formulario de consumidor con los 4 roles, listado con sus keys y revocación.
-- [ ] Interruptor activar/desactivar, edición de roles y selector de vencimiento.
+- [ ] Formularios de consumidor y manager con los roles de su dominio, listado, rotación con vencimiento e interruptor activar/desactivar.
 - [ ] Mostrar los `errors` por campo de los 400.
+- [ ] Arquitectura tomada del frontend de `bolsa-trabajo-tsj` (ver `AGENTS.md`).
 
 ### Paso 4 — Documentación
-- [ ] README: tabla de endpoints al día.
+- [ ] README y wiki: tabla de endpoints al día.
 
 ## Criterios de Aceptación
 
-- [ ] Crear un consumidor devuelve la key una sola vez; el listado nunca trae hashes ni keys en claro.
-- [ ] Un consumidor desactivado deja de autenticarse (401) sin tocar sus keys.
-- [ ] Nombre o roles inválidos → 400 con `errors` por campo; nombre repetido → 409.
-- [ ] Revocar dos veces es idempotente; una key revocada responde 401.
-- [ ] El panel refleja los cambios sin recargar a mano y la key nueva se muestra una sola vez.
+- [ ] Crear un consumidor o manager devuelve la key una sola vez; los listados nunca traen keys ni hashes.
+- [ ] Un rol de otro dominio → 400 con `errors`; nombre o email repetido → 409.
+- [ ] Rotar deja la key anterior inservible al instante; revocar dos veces es idempotente; una key revocada o vencida responde 401.
+- [ ] Un dueño desactivado deja de autenticarse (401) sin tocar su key.
+- [ ] El panel refleja los cambios y la key nueva se muestra una sola vez.
 - [ ] `dotnet build` y `bun run build` correctos.
-
-## Preguntas abiertas
-
-- ¿Cuántas keys activas por consumidor como máximo?
-- ¿La rotación vence la key anterior de inmediato o con un período de gracia?
 
 ## Relacionado
 
 - [[email-service-plan]]
+- [[email-service-fase0-temporal]]
 - [[email-service-auth-sub-plan]]
 - [[email-service-plantillas-sub-plan]]
-
-
