@@ -1,20 +1,20 @@
 ---
-tipo: plan
-titulo: "Plan de implementación del SSO MiTSJ"
+tipo: wiki
+titulo: "Diseño base del SSO MiTSJ"
 autor: "Ana Espinoza"
 creado: 2026-10-27
-actualizado: 2026-10-27
+actualizado: 2026-10-28
 estado: draft
 proyecto: sso
 tags:
   - sso
-  - plan
+  - diseno-base
   - seguridad
 ---
 
-# Plan de implementación del SSO MiTSJ
+# Diseño base del SSO MiTSJ
 
-> Plan de trabajo del SSO. Sus piezas van en `Sub-planes/` con `padre:` apuntando a esta nota.
+> Esquema base de diseño (antes `Planes/sso-implementacion-plan.md`). **Ya no es un plan vigente:** las reglas de negocio se depuran en [[sso-reglas-negocio-wiki]] y, cuando estén cerradas, de ahí saldrán los planes. Ante conflicto, mandan las decisiones de [[sso-decisiones-wiki]].
 
 ## Fuentes copiadas
 

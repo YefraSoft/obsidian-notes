@@ -225,7 +225,7 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant SMTP as SMTP
     C->>API: POST /messages + Idempotency-Key
-    API->>API: valida rol, plantilla y alcance; calcula MessageId
+    API->>API: valida rol, plantilla y alcance, y calcula MessageId
     API->>MQ: publica notificacion.email.individual
     API-->>C: 202 + MessageId
     MQ->>W: entrega el mensaje
@@ -243,8 +243,7 @@ sequenceDiagram
 
 # Pendientes
 
-- [ ] **Fase 0 temporal** — dominios Consumer y Manager, key cifrada y una key por dueño: [[email-service-fase0-temporal]]. Se borra al terminar.
-- [ ] Migrar el panel a `/whoami`, a leer `errors`, a la lista por GraphQL y a los dos dominios; su arquitectura toma como ejemplo el frontend de `bolsa-trabajo-tsj` (ver `AGENTS.md`).
+- [x] Migrar el panel a `/whoami`, a leer `errors`, a la lista por GraphQL y a los dos dominios; su arquitectura toma como ejemplo el frontend de `bolsa-trabajo-tsj` (ver `AGENTS.md`).
 - [ ] Terminar la Fase 1; después Efraín empieza los tests (la carpeta `EmailSendService.Tests/` se queda).
 
 # Estado Actual (resumen ejecutivo)
@@ -254,8 +253,8 @@ sequenceDiagram
 | Infra: compose, `make env/init/up`, OpenBao (AppRole) | ✅ |
 | Errores: `DomainException`, ProblemDetails con `code` y `traceId`, nivel de log por clase | ✅ |
 | Rate limiting: Relaxed / Moderate / Strict, global para lo no declarado | ✅ |
-| Autenticación: `X-Api-Key` única, `GET /whoami`, admin por OpenBao | ✅ (cambia en la Fase 0 temporal: key cifrada con su dominio) |
-| Dominios Consumer y Manager con keys separadas y una key vigente por dueño | ⏳ Fase 0 temporal |
+| Autenticación: `X-Api-Key` única cifrada con su dominio, `GET /whoami` (con `kind`), admin por OpenBao | ✅ |
+| Dominios Consumer y Manager con keys separadas, una key vigente por dueño y roles por dominio | ✅ |
 | Roles, políticas por rol, `Auth:AdminRoles` con `IOptions` | ✅ |
 | Protocolo `Can` / `Require` y matriz `consumer_group_roles` | ✅ (sin endpoints que lo usen aún) |
 | Gestión de consumidores y keys (API) | ✅ por capas (servicios, queries y repositorios); lista por GraphQL |
@@ -264,12 +263,12 @@ sequenceDiagram
 | Módulos por responsabilidad y `IResponseBuilder` | ✅ |
 | Mensajería RabbitMQ (publicador y consumidor) | ⚠ handler provisional que solo escribe en el log |
 | Endpoints de negocio (plantillas, contactos, grupos, envíos) | ⏳ |
-| Panel Astro | ⚠ login roto hasta migrar a `/whoami`; gestión de keys hecha |
+| Panel Astro | ✅ login solo Admin, consumidores, managers y salud |
 
 | Fase / Slice | Dominio | Estado |
 |--------------|---------|--------|
-| 1 | Auth (key cifrada con su dominio: Admin, Consumer, Manager) — [[email-service-auth-sub-plan]] | 🔄 en progreso ([[email-service-fase0-temporal]]; falta el panel) |
-| 2 | Consumidores, managers y keys — [[email-service-consumidores-keys-sub-plan]] | 🔄 en progreso ([[email-service-fase0-temporal]]; falta el panel) |
+| 1 | Auth (key cifrada con su dominio: Admin, Consumer, Manager) — [[email-service-auth-sub-plan]] | ✅ hecha |
+| 2 | Consumidores, managers y keys — [[email-service-consumidores-keys-sub-plan]] | ✅ hecha |
 | 3 | Plantillas — [[email-service-plantillas-sub-plan]] | ⏳ Pendiente |
 | 4 | Sincronización con el Core — [[email-service-sync-core-sub-plan]] | ⏳ Pendiente |
 | 5 | Contactos — [[email-service-contactos-sub-plan]] | ⏳ Pendiente |
