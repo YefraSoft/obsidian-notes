@@ -3,7 +3,7 @@ tipo: plan
 titulo: EmailSendService — Plan de Desarrollo
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-27
+actualizado: 2026-10-28
 estado: en-progreso
 proyecto: email-service
 tags:
@@ -244,7 +244,10 @@ sequenceDiagram
 # Pendientes
 
 - [x] Migrar el panel a `/whoami`, a leer `errors`, a la lista por GraphQL y a los dos dominios; su arquitectura toma como ejemplo el frontend de `bolsa-trabajo-tsj` (ver `AGENTS.md`).
-- [ ] Terminar la Fase 1; después Efraín empieza los tests (la carpeta `EmailSendService.Tests/` se queda).
+- [x] Terminar la Fase 1 (API y panel).
+- [x] Testing en Dokploy: la API se publica en Harbor con `push-harbor.sh` (versión `X.Y.Z.TT`) y corre con `compose.testing.yml` contra una PostgreSQL externa; el panel se usa en local con `API_URL` apuntando a testing.
+- [ ] Pruebas: Efraín escribe las unitarias, el equipo las de integración y k6 mide el rendimiento (la carpeta `EmailSendService.Tests/` se queda).
+- [ ] Siguiente slice: plantillas, con `@maily-to/core` para el editor.
 
 # Estado Actual (resumen ejecutivo)
 
@@ -264,6 +267,7 @@ sequenceDiagram
 | Mensajería RabbitMQ (publicador y consumidor) | ⚠ handler provisional que solo escribe en el log |
 | Endpoints de negocio (plantillas, contactos, grupos, envíos) | ⏳ |
 | Panel Astro | ✅ login solo Admin, consumidores, managers y salud |
+| Testing: imagen de la API en Harbor, `compose.testing.yml` en Dokploy, base externa y secretos como `Secrets__*` (OpenBao opcional) | ✅ |
 
 | Fase / Slice | Dominio | Estado |
 |--------------|---------|--------|
@@ -314,6 +318,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 | `EmailSendService/Src/Infrastructure/Persistence/` | `EmailDbContext`, repositorios y `DataTransaction` |
 | `infra/db.sql` | Esquema de la base (referencia) |
 | `Makefile`, `compose.yml`, `compose.app.yml` | Operación local y contenedor de la API |
+| `compose.testing.yml`, `push-harbor.sh`, `docs/versions/version-history.md` | Testing en Dokploy: compose con la API de Harbor, script que la publica y su historial de versiones |
 | `EmailServiceManagment/src/` | Panel Astro: acciones, cliente de la API y páginas |
 
 **Estructura por dominio:** `Core/Entities`, `Application/<Dominio>` (servicios, queries, repositorios como interfaz, contratos, builders), `Infrastructure/Persistence/Repositories`, `Api/<Dominio>`.
@@ -333,7 +338,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 # FASE 1 — Auth y consumidores (Slices 1 y 2)
 
 > **Objetivo:** que la API acepte la API key (cifrada con su dominio: Admin, Consumer o Manager) con sus roles y que el administrador gestione consumidores, managers y keys desde el panel.
-> **Estado:** 🔄 En progreso — [[email-service-auth-sub-plan]] y [[email-service-consumidores-keys-sub-plan]].
+> **Estado:** ✅ Hecha (API, panel y despliegue de testing) — [[email-service-auth-sub-plan]] y [[email-service-consumidores-keys-sub-plan]].
 
 # FASE 2 — Datos maestros (Slices 3 a 6)
 
