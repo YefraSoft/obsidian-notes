@@ -3,7 +3,7 @@ tipo: plan
 titulo: EmailSendService — Plan de Desarrollo
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-28
+actualizado: 2026-10-29
 estado: en-progreso
 proyecto: email-service
 tags:
@@ -247,7 +247,9 @@ sequenceDiagram
 - [x] Terminar la Fase 1 (API y panel).
 - [x] Testing en Dokploy: la API se publica en Harbor con `push-harbor.sh` (versión `X.Y.Z.TT`) y corre con `compose.testing.yml` contra una PostgreSQL externa; el panel se usa en local con `API_URL` apuntando a testing.
 - [ ] Pruebas: Efraín escribe las unitarias, el equipo las de integración y k6 mide el rendimiento (la carpeta `EmailSendService.Tests/` se queda).
-- [ ] Siguiente slice: plantillas, con `@maily-to/core` para el editor.
+- [x] Slice 3 (plantillas) implementado en API y panel, con `@maily-to/core` para el editor; probado en local.
+- [ ] Deploy del slice de plantillas a testing (aplicar el `ALTER` en la base) y fase de dudas.
+- [ ] Siguiente slice: sincronización con el Core.
 
 # Estado Actual (resumen ejecutivo)
 
@@ -273,7 +275,7 @@ sequenceDiagram
 |--------------|---------|--------|
 | 1 | Auth (key cifrada con su dominio: Admin, Consumer, Manager) — [[email-service-auth-sub-plan]] | ✅ hecha |
 | 2 | Consumidores, managers y keys — [[email-service-consumidores-keys-sub-plan]] | ✅ hecha |
-| 3 | Plantillas — [[email-service-plantillas-sub-plan]] | ⏳ Pendiente |
+| 3 | Plantillas — [[email-service-plantillas-sub-plan]] | ✅ Implementada (falta deploy a testing y refinamiento) |
 | 4 | Sincronización con el Core — [[email-service-sync-core-sub-plan]] | ⏳ Pendiente |
 | 5 | Contactos — [[email-service-contactos-sub-plan]] | ⏳ Pendiente |
 | 6 | Grupos, miembros y asignaciones — [[email-service-grupos-sub-plan]] | ⏳ Pendiente |
@@ -303,7 +305,8 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 - **Mensajería:** exchange `notificacion` (direct, durable) y una cola por canal y alcance `notificacion.<canal>.<alcance>`; hoy solo existe `notificacion.email.individual`.
 - **Módulos:** cada funcionalidad es un `IModule` que implementa solo lo que necesita: `IServiceInstaller` (DI), `IEndpointMapper` (rutas) e `IPipelineStep` (pipeline, con `Order`).
 - **Ejecución local:** `bao login` → `make env` → `make init` → `make up APP=1`; el panel con `bun --bun run dev` en `EmailServiceManagment`.
-- **Deuda conocida:** `GroupPermissions` / `TemplatePermissions` aún leen `EmailDbContext` (viven en `Platform/Auth/Permissions`); se pasan a puertos en los slices 3 y 6.
+- **Deuda conocida:** `GroupPermissions` aún lee `EmailDbContext` (vive en `Platform/Auth/Permissions`); se pasa a puertos en el slice 6. `TemplatePermissions` ya está en `Application/Permissions` con puerto. `Actor.cs` importa `Platform.Auth`, contra la regla de dependencias.
+- **Módulos:** cada dominio es un `IModule` (`ConsumerModule`, `ManagerModule`, `TemplateModule`…) con las capacidades `IServiceInstaller`, `IEndpointMapper`, `IQueryMapper` (campos GraphQL) e `IPipelineStep`; se descubren por reflexión en orden alfabético. Las regex viven en `Core/Text/RegexLibrary` (`IRegexLibrary`).
 
 # Archivos Clave del Proyecto
 
