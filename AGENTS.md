@@ -15,6 +15,7 @@
 - No eliminar nada sin autorización
 - Verificar si la nueva nota existe en NextCloud
 - Toda modificación en la bóveda local (crear, editar, mover, eliminar) debe sincronizarse en la Bóveda Cloud antes de cerrar la tarea; el mapa de rutas vive en `Wiki/mapa-de-bovedas-wiki.md`
+- Las notas `testing` se sincronizan a `3. Operación/Testing/` en la Bóveda Cloud (la plantilla y los `AGENTS.md` no se suben)
 
 ---
 
@@ -28,6 +29,7 @@
 | `Wiki/` | `wiki` | Referencia, catálogos y conocimiento reutilizable. |
 | `Proyectos/` | `proyecto` | Estatus, pendientes y acuerdos del equipo. |
 | `Metodología/` | `metodologia` | Técnicas de productividad y segunda mente (Second Brain, PARA…). |
+| `Testing/` | `testing` | Documentación de entrega para QA: objetivo, funcionamiento, endpoints (request/response) y referencias al plan/wiki/repo. **No** es guía de pruebas. |
 | `plantillas/` | — | Solo plantillas + `AGENTS.md`. Nunca contenido final. |
 
 Regla: cada nota vive en la carpeta de su clase. `plantillas/` nunca guarda notas de trabajo.
@@ -36,14 +38,14 @@ Regla: cada nota vive en la carpeta de su clase. `plantillas/` nunca guarda nota
 
 - `kebab-case`, minúsculas, sin espacios ni tildes en el nombre (la bóveda usa UTF-8 para el contenido, pero el nombre de archivo simple).
 - Patrón: `<proyecto>-<tema>-<clase>.md`
-  - `nummex-app-plan.md`, `backend-manual.md`, `to-production-manual.md`, `rh-cotla-plan.md`.
+  - `nummex-app-plan.md`, `backend-manual.md`, `to-production-manual.md`, `rh-cotla-plan.md`, `email-service-api-testing.md`.
 - Los índices/estatus se permiten sin prefijo de tema: `Proyecto.md`, `proyectos.md`.
 
 ## 3. Frontmatter estándar (todas las notas)
 
 ```yaml
 ---
-tipo: manual            # proyecto | plan | sub-plan | manual | wiki | metodologia
+tipo: manual            # proyecto | plan | sub-plan | manual | wiki | metodologia | testing
 titulo: "Nombre de la nota"
 autor: "Efraín García"
 creado: YYYY-MM-DD
@@ -57,7 +59,7 @@ tags:
 ```
 
 Reglas del frontmatter:
-- `tipo` es el vocabulario cerrado de clases: `proyecto`, `plan`, `sub-plan`, `manual`, `wiki`, `metodologia`.
+- `tipo` es el vocabulario cerrado de clases: `proyecto`, `plan`, `sub-plan`, `manual`, `wiki`, `metodologia`, `testing`.
 - `estado` usa solo esos valores estándar; si necesitas matices, ponlos en el cuerpo.
 - `padre` **solo** y **siempre** en `sub-plan`, con wiki-link al plan padre.
 - `autor` por defecto "Efraín García"; otros autores si se indica.
@@ -71,12 +73,17 @@ Reglas del frontmatter:
 - **wiki** — `Contenido` numerado por secciones y `Relacionado`.
 - **proyecto** — `Estatus` (tabla), `Pendientes`, `Acuerdos`, `Equipo`, `Relacionado`.
 - **metodologia** — `Qué es`, `Por qué/Cuándo usarla`, `Flujo`, `Estructura en esta bóveda`, `Relacionado`.
+- **testing** — `Referencias` · `Objetivo` · `Funcionamiento` · `Entornos y acceso` · `Endpoints` (índice + detalle con request/response) · `Errores y códigos comunes` · `Nota de pruebas` (al final, opcional) · `Relacionado`.
+  - Tono: es **orientación** para que QA sepa qué hace la app y por dónde empezar; nunca prescribe cómo probar ni lista casos de prueba.
+  - `Nota de pruebas` solo dice si desarrollo realizó pruebas o no, con alcance y versión.
+  - Secretos nunca: en `Entornos y acceso` se indica cómo obtener credenciales, no sus valores.
 
 ## 5. Enlaces `[[...]]`
 
 - Usar wiki-links `[[Nombre-de-nota]]` para conectar relacionadas (no rutas completas).
 - Los sub-planes SIEMPRE enlazan a su padre con `padre: "[[...]]"` y en la cabecera.
 - Se prefiere un solo enlace relevante claro a múltiples enlaces sueltos.
+- Las notas `testing` enlazan siempre a su plan de desarrollo y a su wiki (si existe) con `[[...]]` en `Referencias`, indican la ruta de esa documentación en Nextcloud y, si aplica, el repo git y la wiki del repo.
 
 ## 6. Crear / actualizar notas
 
@@ -93,6 +100,7 @@ Convenciones que aplican al trabajar sobre código fuente del equipo:
 - **Documentación por proyecto**: cada repo mantiene sus pendientes en Markdown dentro del repo, p. ej. `tareas-bakcned.md` (backend) y `tareas-fontend.md` (frontend) en `pase-directo/`. Esa lista es la fuente de verdad del sprint a corto plazo; Plane lo es de la planificación.
 - **Modelos de solución**: separar frontend y backend; versionar en git; los despliegues y flujos de subida se documentan como `manual` en la bóveda (`to-production-manual.md`, `backend-manual.md`).
 - **Nuevo proyecto**: crear su `<proyecto>-<tema>-plan.md` en `Planes/`, documentar manuales en `Manuales/`, y publicar su estado en `Proyectos/Proyecto.md`.
+- **Entrega a QA**: al cerrar una entrega que pasa a pruebas, crear o actualizar `Testing/<proyecto>-<tema>-testing.md` desde `plantillas/Template-Testing.md` y sincronizarla a `3. Operación/Testing/` en Nextcloud.
 - **Estándares de código**: preferir documentar decisiones en las secciones `Decisiones de Diseño` / `Arquitectura y Notas Técnicas` del plan, no en comentarios dispersos.
 
 ## 8. Archivos AGENTS en cascada

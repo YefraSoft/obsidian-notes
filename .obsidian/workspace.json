@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "4915c1dbced7ef70",
+        "id": "f71e210d73201a16",
         "type": "tabs",
         "children": [
           {
-            "id": "e4df59e37389c326",
+            "id": "c219bfb8aa3fa6ff",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Planes/nummex-backend-v2-plan.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "nummex-backend-v2-plan"
+              "title": "Nueva pestaña"
             }
           }
         ]
@@ -188,42 +184,43 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "e4df59e37389c326",
+  "active": "3bfd80b6ac2826b5",
   "lastOpenFiles": [
-    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md",
-    "Planes/nummex-backend-v2-plan.md",
-    "Planes/nummex-backend-v2-plan.md.tmp.142264.69556c733648",
-    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md.tmp.142264.392cea132e00",
-    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md.tmp.142264.b112b2264b9c",
-    "Planes/nummex-backend-v2-plan.md.tmp.60850.23089e1d8144",
-    "Planes/nummex-backend-v2-plan.md.tmp.60850.06dc9fe9a290",
-    "Planes/nummex-backend-v2-plan.md.tmp.60850.48605277dfb0",
-    "Planes/nummex-app-plan.md",
-    "Planes/email-service-plan.md",
-    "Planes/nummex-backend-v2-plan.md.tmp.60850.9b7e34fe21ff",
-    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md.tmp.60850.e6ae849aad6f",
+    "plantillas/Template-Testing.md",
+    "Testing",
+    "arquitectura.md",
     "AGENTS.md",
-    "Planes/nummex-backend-v2-plan.md.tmp.60850.67a5af6dd8ec",
+    "plantillas/Template-Wiki.md",
+    "plantillas/Template-Metodologia.md",
+    "plantillas/Template-Manual.md",
+    "Planes/email-service-plan.md",
+    "Sub-planes/email-service-plantillas-sub-plan.md",
     "Sub-planes/email-service-consumidores-keys-sub-plan.md",
     "Sub-planes/email-service-auth-sub-plan.md",
+    "Planes/nummex-app-plan.md",
+    "Planes/nummex-backend-v2-plan.md",
+    "Wiki/sso/sso-forma-de-trabajo-wiki.md",
+    "Wiki/sso/sso-requisitos-wiki.md",
+    "Wiki/sso/sso-requisitos-wiki.md.tmp.3621.9360e33acfa0",
+    "Wiki/sso/sso-alcance-wiki.md",
+    "Wiki/sso/sso-decisiones-wiki.md",
+    "Wiki/sso/sso-reglas-negocio-wiki.md",
+    "Wiki/sso/sso-diseno-base-wiki.md",
+    "Wiki/sso/sso-diagramas-wiki.md",
+    "Wiki/sso",
+    "Planes/sso-implementacion-plan.md",
+    "Wiki/sso-diagramas-wiki.md",
+    "Planes/email-service-fase0-temporal.md",
     "Proyectos/proyectos.md",
     "Proyectos/Proyecto.md",
     "Manuales/news-service-manual.md",
     "Sub-planes/email-service-seguimiento-bajas-sub-plan.md",
-    "Sub-planes/email-service-envio-grupal-sub-plan.md",
-    "Sub-planes/email-service-envio-individual-sub-plan.md",
-    "Sub-planes/email-service-grupos-sub-plan.md",
-    "Sub-planes/email-service-contactos-sub-plan.md",
-    "Sub-planes/email-service-sync-core-sub-plan.md",
-    "Sub-planes/email-service-plantillas-sub-plan.md",
-    "Manuales/backend-manual.md",
-    "Manuales/cdn-service-manual.md",
-    "Manuales/to-production-manual.md",
-    "plantillas/AGENTS.md",
-    "plantillas/Template-Manual.md",
-    "plantillas/Template-Metodologia.md",
-    "plantillas/Template-Plan-de-trabajo.md",
-    "plantillas/Template-Proyecto.md",
-    "plantillas"
+    "plantillas",
+    "Metodología",
+    "Proyectos",
+    "Wiki",
+    "Sub-planes",
+    "Planes",
+    "Manuales"
   ]
 }

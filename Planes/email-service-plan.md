@@ -3,7 +3,7 @@ tipo: plan
 titulo: EmailSendService — Plan de Desarrollo
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-27
+actualizado: 2026-10-29
 estado: en-progreso
 proyecto: email-service
 tags:
@@ -59,15 +59,15 @@ tags:
 
 ## 3. Capas de un endpoint: qué hace cada pieza
 
-| Pieza | Responsabilidad |
-|-------|-----------------|
-| **Controller** | HTTP: bind, política de rol, `Actor.From`, `Results.*`. No toca el `DbContext` |
-| **Service** | Reglas de negocio, `Can/Require`, excepciones de dominio, un `CommitAsync` por caso de uso |
-| **Queries** | Lecturas y listas paginadas |
-| **Repository** | Consultas por intención (`NameExistsAsync`, `FindAsync`, `ListAsync`); sin genéricos ni `IQueryable` expuesto |
+| Pieza                  | Responsabilidad                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Controller**         | HTTP: bind, política de rol, `Actor.From`, `Results.*`. No toca el `DbContext`                                    |
+| **Service**            | Reglas de negocio, `Can/Require`, excepciones de dominio, un `CommitAsync` por caso de uso                        |
+| **Queries**            | Lecturas y listas paginadas                                                                                       |
+| **Repository**         | Consultas por intención (`NameExistsAsync`, `FindAsync`, `ListAsync`); sin genéricos ni `IQueryable` expuesto     |
 | **`IDataTransaction`** | Confirma la transacción del caso de uso (`CommitAsync`) y traduce la unicidad de Postgres a `InConflictException` |
-| **`IResponseBuilder`** | Proyección de EF a respuesta (`.Select(builder.Projection)`) |
-| **Data** | `EmailDbContext` y entidades |
+| **`IResponseBuilder`** | Proyección de EF a respuesta (`.Select(builder.Projection)`)                                                      |
+| **Data**               | `EmailDbContext` y entidades                                                                                      |
 
 Todo punto de entrada (controller REST, resolver GraphQL, consumidor de RabbitMQ) es un **adaptador**: solo traduce y delega a un servicio o a las queries.
 
@@ -81,8 +81,9 @@ Todo punto de entrada (controller REST, resolver GraphQL, consumidor de RabbitMQ
 
 ## 5. Seguridad y acceso
 
-- Una sola cabecera `X-Api-Key`: el administrador se reconoce por igualdad con el secreto de OpenBao; el consumidor, por el SHA-256 de su key en `keys`.
-- Roles `ConsumerRole` (`Sender`, `GroupSender`, `GroupManager`, `TemplateManager`), planos y combinables, en `consumer.capabilities` (libre en la base); el administrador tiene `Admin` más los de `Auth:AdminRoles`.
+- Tres identidades con una sola cabecera `X-Api-Key`: **Admin** (igualdad con el secreto de OpenBao), **Consumer** (app, backend a backend) y **Manager** (persona con email que administra contactos; sin contraseña, usa su key). Son dominios separados: tablas `consumer` y `manager`, cada una con su tabla de keys (`consumer_keys`, `manager_keys`).
+- La key es un token cifrado y autenticado (AES-256-GCM) que lleva el dominio, el id de la key y el del dueño: al descifrarla se sabe a qué tabla ir (una sola consulta). Una key alterada se rechaza sin tocar la base; si es válida, la base manda (SHA-256, revocada, vencida, dueño inactivo). **Una sola key vigente por dueño**: rotar reemplaza la anterior al instante; `expire_at` opcional para keys temporales.
+- Roles `ConsumerRole` planos y combinables, en `capabilities`, **por dominio sin mezcla**: Consumer → `Sender`, `GroupSender`; Manager → `GroupManager`, `TemplateManager`. El administrador tiene `Admin` más los de `Auth:AdminRoles`.
 - Una política de autorización por rol; un consumidor que llama a una ruta de gestión recibe el mismo 401 que con una key inválida.
 - Protocolo `CanX` (bool) / `RequireX` (lanza) con matriz de dos capas: rol + alcance por recurso (`consumer_group_roles`, `consumer_templates`).
 - `messages/*` es consulta interna: solo `GroupManager` y Admin. Los consumidores no conocen estados internos.
@@ -186,7 +187,9 @@ flowchart TD
     REQ["Petición con X-Api-Key"] --> RL["Rate limiting"]
     RL --> AUTH{"ApiKeyAuthenticationHandler"}
     AUTH -->|"igual a ADMIN_API_KEY"| ADM["Claims: Admin + Auth:AdminRoles"]
-    AUTH -->|"SHA-256 en keys vigente y consumidor activo"| CON["Claims: capabilities ∩ ConsumerRole"]
+    AUTH -->|"descifra la key (dominio + ids)"| DEC{"¿íntegra?"}
+    DEC -->|"alterada"| F401
+    DEC -->|"consumer o manager: una consulta a su tabla de keys<br/>(SHA-256, vigente, dueño activo)"| CON["Claims: dominio + roles válidos del dominio"]
     AUTH -->|"no coincide"| F401["401"]
     ADM --> POL{"Política de rol"}
     CON --> POL
@@ -222,7 +225,7 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant SMTP as SMTP
     C->>API: POST /messages + Idempotency-Key
-    API->>API: valida rol, plantilla y alcance; calcula MessageId
+    API->>API: valida rol, plantilla y alcance, y calcula MessageId
     API->>MQ: publica notificacion.email.individual
     API-->>C: 202 + MessageId
     MQ->>W: entrega el mensaje
@@ -240,8 +243,13 @@ sequenceDiagram
 
 # Pendientes
 
-- [ ] Migrar el panel a `/whoami`, a leer `errors` y a pedir la lista de consumidores por GraphQL (Slice 1 y 2); la arquitectura del panel se define con la app de ejemplo que dará Efraín.
-- [ ] Terminar la Fase 1; después Efraín empieza los tests (la carpeta `EmailSendService.Tests/` se queda).
+- [x] Migrar el panel a `/whoami`, a leer `errors`, a la lista por GraphQL y a los dos dominios; su arquitectura toma como ejemplo el frontend de `bolsa-trabajo-tsj` (ver `AGENTS.md`).
+- [x] Terminar la Fase 1 (API y panel).
+- [x] Testing en Dokploy: la API se publica en Harbor con `push-harbor.sh` (versión `X.Y.Z.TT`) y corre con `compose.testing.yml` contra una PostgreSQL externa; el panel se usa en local con `API_URL` apuntando a testing.
+- [ ] Pruebas: Efraín escribe las unitarias, el equipo las de integración y k6 mide el rendimiento (la carpeta `EmailSendService.Tests/` se queda).
+- [x] Slice 3 (plantillas) implementado en API y panel, con `@maily-to/core` para el editor; probado en local.
+- [ ] Deploy del slice de plantillas a testing (aplicar el `ALTER` en la base) y fase de dudas.
+- [ ] Slice 4 (sincronización con el Core) en curso: detallado cerrado el 2026-10-29 como **revisión asistida por población** (ver [[email-service-sync-core-sub-plan]]); falta la consulta SQL de aspirantes.
 
 # Estado Actual (resumen ejecutivo)
 
@@ -250,7 +258,8 @@ sequenceDiagram
 | Infra: compose, `make env/init/up`, OpenBao (AppRole) | ✅ |
 | Errores: `DomainException`, ProblemDetails con `code` y `traceId`, nivel de log por clase | ✅ |
 | Rate limiting: Relaxed / Moderate / Strict, global para lo no declarado | ✅ |
-| Autenticación: `X-Api-Key` única, `GET /whoami`, admin por OpenBao | ✅ |
+| Autenticación: `X-Api-Key` única cifrada con su dominio, `GET /whoami` (con `kind`), admin por OpenBao | ✅ |
+| Dominios Consumer y Manager con keys separadas, una key vigente por dueño y roles por dominio | ✅ |
 | Roles, políticas por rol, `Auth:AdminRoles` con `IOptions` | ✅ |
 | Protocolo `Can` / `Require` y matriz `consumer_group_roles` | ✅ (sin endpoints que lo usen aún) |
 | Gestión de consumidores y keys (API) | ✅ por capas (servicios, queries y repositorios); lista por GraphQL |
@@ -259,13 +268,14 @@ sequenceDiagram
 | Módulos por responsabilidad y `IResponseBuilder` | ✅ |
 | Mensajería RabbitMQ (publicador y consumidor) | ⚠ handler provisional que solo escribe en el log |
 | Endpoints de negocio (plantillas, contactos, grupos, envíos) | ⏳ |
-| Panel Astro | ⚠ login roto hasta migrar a `/whoami`; gestión de keys hecha |
+| Panel Astro | ✅ login solo Admin, consumidores, managers y salud |
+| Testing: imagen de la API en Harbor, `compose.testing.yml` en Dokploy, base externa y secretos como `Secrets__*` (OpenBao opcional) | ✅ |
 
 | Fase / Slice | Dominio | Estado |
 |--------------|---------|--------|
-| 1 | Auth (aceptar la API key) — [[email-service-auth-sub-plan]] | 🔄 en progreso (API lista; falta el panel) |
-| 2 | Consumidores y keys — [[email-service-consumidores-keys-sub-plan]] | 🔄 en progreso (API lista; falta el panel) |
-| 3 | Plantillas — [[email-service-plantillas-sub-plan]] | ⏳ Pendiente |
+| 1 | Auth (key cifrada con su dominio: Admin, Consumer, Manager) — [[email-service-auth-sub-plan]] | ✅ hecha |
+| 2 | Consumidores, managers y keys — [[email-service-consumidores-keys-sub-plan]] | ✅ hecha |
+| 3 | Plantillas — [[email-service-plantillas-sub-plan]] | ✅ Implementada (falta deploy a testing y refinamiento) |
 | 4 | Sincronización con el Core — [[email-service-sync-core-sub-plan]] | ⏳ Pendiente |
 | 5 | Contactos — [[email-service-contactos-sub-plan]] | ⏳ Pendiente |
 | 6 | Grupos, miembros y asignaciones — [[email-service-grupos-sub-plan]] | ⏳ Pendiente |
@@ -280,7 +290,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 1. Clean Architecture adaptada y SOLID, con dependencias hacia adentro (regla 1 y 2).
 2. Controller → service → repository → data; servicios y queries separados; `IDataTransaction` por caso de uso (regla 3).
 3. REST para lo simple y las escrituras; GraphQL.NET para listas grandes (regla 4).
-4. Una sola `X-Api-Key`; roles como enum con `capabilities` libre; matriz de dos capas; `messages/*` interno (regla 5).
+4. Una sola `X-Api-Key` cifrada con su dominio (Admin, Consumer, Manager); una key vigente por dueño; roles por dominio sin mezcla; matriz de dos capas; `messages/*` interno (regla 5).
 5. El nivel de log vive en la clase base de cada excepción (regla 6).
 6. Validación nativa y respuestas por `IResponseBuilder` (regla 7).
 7. El worker es dueño del registro del mensaje (regla 8).
@@ -295,7 +305,8 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 - **Mensajería:** exchange `notificacion` (direct, durable) y una cola por canal y alcance `notificacion.<canal>.<alcance>`; hoy solo existe `notificacion.email.individual`.
 - **Módulos:** cada funcionalidad es un `IModule` que implementa solo lo que necesita: `IServiceInstaller` (DI), `IEndpointMapper` (rutas) e `IPipelineStep` (pipeline, con `Order`).
 - **Ejecución local:** `bao login` → `make env` → `make init` → `make up APP=1`; el panel con `bun --bun run dev` en `EmailServiceManagment`.
-- **Deuda conocida:** `GroupPermissions` / `TemplatePermissions` aún leen `EmailDbContext` (viven en `Platform/Auth/Permissions`); se pasan a puertos en los slices 3 y 6.
+- **Deuda conocida:** `GroupPermissions` aún lee `EmailDbContext` (vive en `Platform/Auth/Permissions`); se pasa a puertos en el slice 6. `TemplatePermissions` ya está en `Application/Permissions` con puerto. `Actor.cs` importa `Platform.Auth`, contra la regla de dependencias.
+- **Módulos:** cada dominio es un `IModule` (`ConsumerModule`, `ManagerModule`, `TemplateModule`…) con las capacidades `IServiceInstaller`, `IEndpointMapper`, `IQueryMapper` (campos GraphQL) e `IPipelineStep`; se descubren por reflexión en orden alfabético. Las regex viven en `Core/Text/RegexLibrary` (`IRegexLibrary`).
 
 # Archivos Clave del Proyecto
 
@@ -310,6 +321,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 | `EmailSendService/Src/Infrastructure/Persistence/` | `EmailDbContext`, repositorios y `DataTransaction` |
 | `infra/db.sql` | Esquema de la base (referencia) |
 | `Makefile`, `compose.yml`, `compose.app.yml` | Operación local y contenedor de la API |
+| `compose.testing.yml`, `push-harbor.sh`, `docs/versions/version-history.md` | Testing en Dokploy: compose con la API de Harbor, script que la publica y su historial de versiones |
 | `EmailServiceManagment/src/` | Panel Astro: acciones, cliente de la API y páginas |
 
 **Estructura por dominio:** `Core/Entities`, `Application/<Dominio>` (servicios, queries, repositorios como interfaz, contratos, builders), `Infrastructure/Persistence/Repositories`, `Api/<Dominio>`.
@@ -328,8 +340,8 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 
 # FASE 1 — Auth y consumidores (Slices 1 y 2)
 
-> **Objetivo:** que la API acepte la API key con sus roles y que el administrador gestione consumidores y keys desde el panel.
-> **Estado:** 🔄 En progreso — [[email-service-auth-sub-plan]] y [[email-service-consumidores-keys-sub-plan]].
+> **Objetivo:** que la API acepte la API key (cifrada con su dominio: Admin, Consumer o Manager) con sus roles y que el administrador gestione consumidores, managers y keys desde el panel.
+> **Estado:** ✅ Hecha (API, panel y despliegue de testing) — [[email-service-auth-sub-plan]] y [[email-service-consumidores-keys-sub-plan]].
 
 # FASE 2 — Datos maestros (Slices 3 a 6)
 

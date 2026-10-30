@@ -17,6 +17,7 @@ Este archivo norma cómo se **usan las plantillas** de esta carpeta. Las reglas 
 | `Template-Manual.md` | `manual` | `Manuales/` |
 | `Template-Wiki.md` | `wiki` | `Wiki/` |
 | `Template-Metodologia.md` | `metodologia` | `Metodología/` |
+| `Template-Testing.md` | `testing` | `Testing/` |
 
 ## Cómo se usa una plantilla
 
@@ -33,10 +34,11 @@ Este archivo norma cómo se **usan las plantillas** de esta carpeta. Las reglas 
 
 ## Tipos de nota (vocabulario cerrado)
 
-`proyecto` · `plan` · `sub-plan` · `manual` · `wiki` · `metodologia`
+`proyecto` · `plan` · `sub-plan` · `manual` · `wiki` · `metodologia` · `testing`
 
 - `sub-plan` **requiere** la clave `padre`.
 - Los planes completos van a `Planes/`; sus piezas, a `Sub-planes/` apuntando al padre con `padre:`.
+- `testing` describe la app **para QA** (objetivo, funcionamiento, endpoints con request/response, referencias al plan/wiki/repo). **No** incluye casos de prueba ni pasos de ejecución: QA decide cómo probar. La única sección que habla de pruebas es `Nota de pruebas`, va al final y es opcional (si desarrollo probó o no, y qué alcance tuvo).
 
 ## Verificación
 
@@ -45,3 +47,4 @@ Antes de continuar, comprobar que:
 - [ ] El `tipo` coincide con la clase de la plantilla usada.
 - [ ] Si es `sub-plan`, `padre` apunta a un plan existente.
 - [ ] La nota quedó en la carpeta de su clase, no aquí.
+- [ ] Si es `testing`, la sección `Referencias` apunta al plan y a la wiki (bóveda local + ruta en Nextcloud) y al repo git / wiki del repo cuando aplique.

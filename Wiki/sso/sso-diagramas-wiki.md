@@ -311,5 +311,5 @@ flowchart LR
 
 ## Relacionado
 
-- [[sso-implementacion-plan]]
+- [[sso-diseno-base-wiki]]
 - Requerimientos: `sso` (v0.16) y `arquitectura` (v0.9), en las Fuentes del plan.
