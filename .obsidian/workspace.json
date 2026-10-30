@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "4085dad2c8d24e78",
+        "id": "4915c1dbced7ef70",
         "type": "tabs",
         "children": [
           {
-            "id": "985ee18c3627eddd",
+            "id": "e4df59e37389c326",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Sub-planes/email-service-consumidores-keys-sub-plan.md",
+                "file": "Planes/nummex-backend-v2-plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "email-service-consumidores-keys-sub-plan"
+              "title": "nummex-backend-v2-plan"
             }
           }
         ]
@@ -188,9 +188,23 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "985ee18c3627eddd",
+  "active": "e4df59e37389c326",
   "lastOpenFiles": [
+    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md",
+    "Planes/nummex-backend-v2-plan.md",
+    "Planes/nummex-backend-v2-plan.md.tmp.142264.69556c733648",
+    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md.tmp.142264.392cea132e00",
+    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md.tmp.142264.b112b2264b9c",
+    "Planes/nummex-backend-v2-plan.md.tmp.60850.23089e1d8144",
+    "Planes/nummex-backend-v2-plan.md.tmp.60850.06dc9fe9a290",
+    "Planes/nummex-backend-v2-plan.md.tmp.60850.48605277dfb0",
+    "Planes/nummex-app-plan.md",
     "Planes/email-service-plan.md",
+    "Planes/nummex-backend-v2-plan.md.tmp.60850.9b7e34fe21ff",
+    "Sub-planes/nummex-backend-v2-fase-1-sub-plan.md.tmp.60850.e6ae849aad6f",
+    "AGENTS.md",
+    "Planes/nummex-backend-v2-plan.md.tmp.60850.67a5af6dd8ec",
+    "Sub-planes/email-service-consumidores-keys-sub-plan.md",
     "Sub-planes/email-service-auth-sub-plan.md",
     "Proyectos/proyectos.md",
     "Proyectos/Proyecto.md",
@@ -202,7 +216,6 @@
     "Sub-planes/email-service-contactos-sub-plan.md",
     "Sub-planes/email-service-sync-core-sub-plan.md",
     "Sub-planes/email-service-plantillas-sub-plan.md",
-    "Sub-planes/email-service-consumidores-keys-sub-plan.md",
     "Manuales/backend-manual.md",
     "Manuales/cdn-service-manual.md",
     "Manuales/to-production-manual.md",
@@ -211,17 +224,6 @@
     "plantillas/Template-Metodologia.md",
     "plantillas/Template-Plan-de-trabajo.md",
     "plantillas/Template-Proyecto.md",
-    "plantillas/Template-Sub-plan.md",
-    "plantillas/Template-Wiki.md",
-    "Manuales/servicio-cp-manual.md",
-    "AGENTS.md",
-    "Manuales/tsj-web-api-frontend-manual.md",
-    "plantillas",
-    "Metodología",
-    "Proyectos",
-    "Wiki",
-    "Sub-planes",
-    "Planes",
-    "Manuales"
+    "plantillas"
   ]
 }
