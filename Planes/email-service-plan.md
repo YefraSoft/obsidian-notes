@@ -249,7 +249,7 @@ sequenceDiagram
 - [ ] Pruebas: Efraín escribe las unitarias, el equipo las de integración y k6 mide el rendimiento (la carpeta `EmailSendService.Tests/` se queda).
 - [x] Slice 3 (plantillas) implementado en API y panel, con `@maily-to/core` para el editor; probado en local.
 - [ ] Deploy del slice de plantillas a testing (aplicar el `ALTER` en la base) y fase de dudas.
-- [ ] Siguiente slice: sincronización con el Core.
+- [ ] Slice 4 (sincronización con el Core) en curso: detallado cerrado el 2026-10-29 como **revisión asistida por población** (ver [[email-service-sync-core-sub-plan]]); falta la consulta SQL de aspirantes.
 
 # Estado Actual (resumen ejecutivo)
 

@@ -3,7 +3,7 @@ tipo: wiki
 titulo: "Mapa de bóvedas"
 autor: "Efraín García"
 creado: 2026-09-24
-actualizado: 2026-10-27
+actualizado: 2026-10-29
 estado: vigente
 tags:
   - wiki
@@ -57,6 +57,7 @@ Obsidian Vault/
 │   ├── Template-Plan-de-trabajo.md
 │   ├── Template-Proyecto.md
 │   ├── Template-Sub-plan.md
+│   ├── Template-Testing.md
 │   └── Template-Wiki.md
 ├── Proyectos/                   [proyecto]
 │   ├── Proyecto.md
@@ -74,8 +75,11 @@ Obsidian Vault/
 │   ├── nummex-agent-rag-plan.md
 │   ├── nummex-cloudflare-deploy-plan.md
 │   └── pase-directo-api-aspirantes-sub-plan.md
+├── Testing/                     [testing]  (documentación de entrega para QA)
 └── Wiki/                        [wiki]
-    └── repositorio-imagenes.md
+    ├── mapa-de-bovedas-wiki.md
+    ├── repositorio-imagenes.md
+    └── sso/                     (7 wikis del SSO)
 ```
 
 ### 1.3 Notas por clase
@@ -85,10 +89,11 @@ Obsidian Vault/
 | `manual` | `Manuales/` | 5 |
 | `metodologia` | `Metodología/` | 1 |
 | `plan` | `Planes/` | 4 |
-| `plantillas` | `plantillas/` | 7 (6 templates + AGENTS) |
+| `plantillas` | `plantillas/` | 8 (7 templates + AGENTS) |
 | `proyecto` | `Proyectos/` | 2 |
 | `sub-plan` | `Sub-planes/` | 12 |
-| `wiki` | `Wiki/` | 1 (+ esta) |
+| `testing` | `Testing/` | 0 |
+| `wiki` | `Wiki/` | 2 (+ 7 en `sso/`) |
 
 ## 2. Bóveda cloud
 
@@ -137,7 +142,8 @@ Nextcloud-cloud.tecmm.mx-punketos/
 │   ├── Acuerdos-21-09.md
 │   ├── Efrain-Garcia-Proyectos.md
 │   ├── Efrain-Garcia-Wiki.md
-│   └── Proyectos Ana Espinoza.md
+│   ├── Proyectos Ana Espinoza.md
+│   └── Testing/                    (notas `testing` por proyecto, para QA)
 └── Talk/
 ```
 
@@ -155,7 +161,7 @@ Nextcloud-cloud.tecmm.mx-punketos/
 | Dimensión | Bóveda local | Bóveda cloud |
 |-----------|--------------|--------------|
 | Orden | Por clase (`tipo`) | Por dominio |
-| Raíces | `Manuales/`, `Planes/`, `Sub-planes/`, `Wiki/`, `Proyectos/`, `Metodología/`, `plantillas/` | `1. Gobernanza/`, `2. Proyectos/`, `3. Operación/`, `Talk/` |
+| Raíces | `Manuales/`, `Planes/`, `Sub-planes/`, `Wiki/`, `Proyectos/`, `Metodología/`, `Testing/`, `plantillas/` | `1. Gobernanza/`, `2. Proyectos/`, `3. Operación/`, `Talk/` |
 | Control de versiones | Git | Nextcloud |
 | Documentos binarios | No | Sí (PDF, DOCX, XLSX, PPTX, JPG, fuentes) |
 | Reglas | `AGENTS.md` (raíz) + `plantillas/AGENTS.md` | `Readme.md` |

@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "4085dad2c8d24e78",
+        "id": "f71e210d73201a16",
         "type": "tabs",
         "children": [
           {
-            "id": "985ee18c3627eddd",
+            "id": "c219bfb8aa3fa6ff",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Planes/email-service-plan.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "email-service-plan"
+              "title": "Nueva pestaña"
             }
           }
         ]
@@ -188,10 +184,18 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "985ee18c3627eddd",
+  "active": "3bfd80b6ac2826b5",
   "lastOpenFiles": [
-    "Sub-planes/email-service-consumidores-keys-sub-plan.md",
+    "plantillas/Template-Testing.md",
+    "Testing",
+    "arquitectura.md",
+    "AGENTS.md",
+    "plantillas/Template-Wiki.md",
+    "plantillas/Template-Metodologia.md",
+    "plantillas/Template-Manual.md",
     "Planes/email-service-plan.md",
+    "Sub-planes/email-service-plantillas-sub-plan.md",
+    "Sub-planes/email-service-consumidores-keys-sub-plan.md",
     "Sub-planes/email-service-auth-sub-plan.md",
     "Planes/nummex-app-plan.md",
     "Planes/nummex-backend-v2-plan.md",
@@ -206,18 +210,11 @@
     "Wiki/sso",
     "Planes/sso-implementacion-plan.md",
     "Wiki/sso-diagramas-wiki.md",
-    "arquitectura.md",
-    "AGENTS.md",
     "Planes/email-service-fase0-temporal.md",
     "Proyectos/proyectos.md",
     "Proyectos/Proyecto.md",
     "Manuales/news-service-manual.md",
     "Sub-planes/email-service-seguimiento-bajas-sub-plan.md",
-    "Sub-planes/email-service-envio-grupal-sub-plan.md",
-    "Sub-planes/email-service-envio-individual-sub-plan.md",
-    "Sub-planes/email-service-grupos-sub-plan.md",
-    "Sub-planes/email-service-contactos-sub-plan.md",
-    "Sub-planes/email-service-sync-core-sub-plan.md",
     "plantillas",
     "Metodología",
     "Proyectos",
