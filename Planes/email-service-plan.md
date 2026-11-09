@@ -254,7 +254,7 @@ sequenceDiagram
 
 - [x] Migrar el panel a `/whoami`, a leer `errors`, a la lista por GraphQL y a los dos dominios; su arquitectura toma como ejemplo el frontend de `bolsa-trabajo-tsj` (ver `AGENTS.md`).
 - [x] Terminar la Fase 1 (API y panel).
-- [x] Testing en Dokploy: la API se publica en Harbor con `push-harbor.sh` (versión `X.Y.Z.TT`) y corre con `compose.testing.yml` contra una PostgreSQL externa; el panel se usa en local con `API_URL` apuntando a testing.
+- [x] Testing en Dokploy: la API se publica en Harbor con `push-harbor.sh` (versión `X.Y.Z.TT`) y corre con `compose.staging.yml` contra una PostgreSQL externa; el panel se usa en local con `API_URL` apuntando a testing.
 - [ ] Pruebas: Efraín escribe las unitarias, el equipo las de integración y k6 mide el rendimiento (la carpeta `EmailSendService.Tests/` se queda).
 - [x] Slice 3 (plantillas) implementado en API y panel, con `@maily-to/core` para el editor; probado en local.
 - [ ] Deploy del slice de plantillas a testing (aplicar el `ALTER` en la base) y fase de dudas.
@@ -267,7 +267,7 @@ sequenceDiagram
 - [x] Panel: borradores de plantilla en `localStorage` (guardado al perder el foco, recuperación desde el editor y la lista) — 2026-10-30.
 - [ ] CI/CD (en curso desde el 2026-11-03): Gitea Actions con runner en el servidor de Dokploy, imágenes de API y panel en Harbor, entrega a testing con push a `staging`, etiquetas `v*` para producción más adelante. Ver [[email-service-cicd-sub-plan]].
 - [ ] Cerrar la Fase 2 con la primera entrega por pipeline: slices 3 a 6 a testing (`ALTER` de plantillas, sincronización, contactos y grupos a mano), E2E, fase de dudas y endpoints en Insomnia. Después, Fase 3 (envío).
-- [ ] Al cerrar la Fase 2, guardar los endpoints en Insomnia.
+- [x] Al cerrar la Fase 2, guardar los endpoints en Insomnia (`infra/test/insomnia/EmailSendService.insomnia.json`).
 - [x] Bitácora de errores del slice 7 (ER-014 a ER-032) corregida y verificada de punta a punta con Gmail (2026-11-06).
 - [x] Slice 8 (envío a grupos y lotes) implementado y verificado en local (2026-11-09), con lotes de 2036 contactos.
   - Incluye REST, gRPC `SendToGroup`, el avance en vivo por SSE, el reconciliador y el panel.
@@ -283,6 +283,20 @@ sequenceDiagram
 - [ ] Ajuste del slice 7 (2026-11-05): **las apps envían por gRPC** (puerto 8081 solo HTTP/2, `x-api-key` en metadata, `.proto` en `Api/Messages/Protos`; REST se conserva para el panel) y la **idempotencia vuelve a Redis** con el patrón de Stripe (mismo id sin reprocesar, 409 si se reutiliza la key con otro cuerpo, 503 sin Redis); el id derivado queda como red de seguridad. El servidor es **Valkey** (`valkey/valkey:9.0-alpine`, fork BSD compatible con Redis; el código conserva los nombres `Redis:*`): entra en los compose, en `health/ready` y en Dokploy (`EMAIL_SENDER_VALKEY_PASSWORD`, `EMAIL_SENDER_GRPC_PORT`).
 - [ ] Compose de Dokploy en Swarm (2026-11-05): `compose.testing.yml` → `compose.staging.yml` (solo API y panel) y nuevo `compose.servicios.yml`, stack compartido con RabbitMQ en clúster de 2 nodos y Valkey primario + réplica sobre `dokploy-network`, reutilizable por otras apps; las colas pasan a tipo quorum. Detalle en la decisión 14 del sub-plan.
 - [x] Documentación de entrega para QA de la Fase 2 (2026-11-03): [[email-service-datos-maestros-testing]] (actores, flujo, reglas, entornos de testing, los 24 endpoints con request/response, pantallas del panel y nota de pruebas); sincronizada a `3. Operación/Testing/` en Nextcloud.
+
+## Revisión de fases 1–3 (2026-11-09)
+
+Clasificación de lo pendiente decidida por Efraín:
+
+- **Entra a la Fase 4:**
+  - Bloqueo "en curso" de la idempotencia antes de publicar (hoy el `SET NX` va después de publicar).
+  - `ISentLedger` en Valkey (hoy en memoria: no sobrevive a un reinicio ni se comparte entre réplicas).
+  - Concurrencia optimista con `xmin` en `messages`.
+  - Pausa del consumidor por cuota agotada y reenvío desde la dlq.
+  - Limpieza menor: liberar la suscripción de `BatchQueries.WatchAsync`, número de intento desde la fila en vez de `x-attempt`, refactor de `SendTestModal` con `useListOnOpen`/`useSelectedTemplate`, `Actor.cs` sin `Platform.Auth`.
+  - Procedimiento de rotación de la admin key y de la clave de cifrado en la wiki.
+- **Deuda anotada (no entra):** rate limit por consumidor (hoy por IP porque corre antes de autenticar, en REST y gRPC); 403 de las políticas sin `code`; `BatchReconciler` sin bloqueo entre réplicas; tercer nodo de RabbitMQ; Sentinel o failover automático de Valkey.
+- **Versión 1.1.0:** consultas del Core con `CONCAT_WS` y filtro de vigencia (`status`/`opc`) ([[email-service-sync-core-sub-plan]]).
 
 # Estado Actual (resumen ejecutivo)
 
@@ -302,7 +316,7 @@ sequenceDiagram
 | Mensajería RabbitMQ: colas quorum, reintentos con colas de espera, dlq y cola grupal | ✅ worker SMTP real (slice 7) y expansión y cierre de lotes (slice 8) |
 | Endpoints de negocio (plantillas, contactos, grupos, envíos 1 a 1 y a grupos) | ✅ en local; seguimiento y bajas en el slice 9 |
 | Panel Astro | ✅ login por identidad (Admin, Manager, Consumer), datos maestros, envíos y lotes con avance en vivo |
-| Testing: imagen de la API en Harbor, `compose.testing.yml` en Dokploy, base externa y secretos como `Secrets__*` (OpenBao opcional) | ✅ |
+| Testing: imagen de la API en Harbor, `compose.staging.yml` en Dokploy, base externa y secretos como `Secrets__*` (OpenBao opcional) | ✅ |
 
 | Fase / Slice | Dominio | Estado |
 |--------------|---------|--------|
@@ -356,7 +370,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 | `EmailSendService/Src/Infrastructure/Persistence/` | `EmailDbContext`, repositorios y `DataTransaction` |
 | `infra/db.sql` | Esquema de la base (referencia) |
 | `Makefile`, `compose.yml`, `compose.app.yml` | Operación local y contenedor de la API |
-| `compose.testing.yml`, `push-harbor.sh`, `docs/versions/version-history.md` | Testing en Dokploy: compose con la API de Harbor, script que la publica y su historial de versiones |
+| `compose.staging.yml`, `push-harbor.sh`, `docs/versions/version-history.md` | Testing en Dokploy: compose con la API de Harbor, script que la publica y su historial de versiones |
 | `EmailServiceManagment/src/` | Panel Astro: acciones, cliente de la API y páginas |
 
 **Estructura por dominio:** `Core/Entities`, `Application/<Dominio>` (servicios, queries, repositorios como interfaz, contratos, builders), `Infrastructure/Persistence/Repositories`, `Api/<Dominio>`.
@@ -394,6 +408,7 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 # FASE 4 — Seguimiento y producción (Slice 9 y endurecimiento)
 
 > **Objetivo:** apertura, bajas y consulta interna de mensajes; **migraciones automáticas con EF Core** en lugar de los `ALTER` a mano; y dejar el servicio listo para producción (OpenBao por https y rotación del `secret_id`, AppRole restringido por IP, `ForwardedHeaders`, `ASTRO_KEY` y `allowedDomains` del panel, rotación de la admin key).
+> **Deuda que entra (revisión 2026-11-09):** bloqueo "en curso" de la idempotencia antes de publicar, `ISentLedger` en Valkey, `xmin` en `messages`, pausa por cuota y reenvío desde la dlq, limpieza menor (`WatchAsync`, intento desde la fila, `SendTestModal`, `Actor.cs`) y rotación de claves documentada en la wiki.
 > **Estado:** ⏳ Pendiente — [[email-service-seguimiento-bajas-sub-plan]].
 
 # Dependencias y Orden de Ejecución

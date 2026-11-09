@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: CI/CD — Gitea Actions, Harbor y Dokploy
 autor: Efraín García
 creado: 2026-11-03
-actualizado: 2026-11-03
+actualizado: 2026-11-09
 estado: en-progreso
 proyecto: email-service
 padre: "[[email-service-plan]]"
@@ -24,11 +24,11 @@ tags:
 ## Pendientes
 
 - [x] Dialogar el diseño con Efraín (2026-11-03).
-- [ ] `push-harbor.sh`: publica también el panel, modo `CI=1`, salida `VERSION=`.
-- [ ] `compose.testing.yml`: servicio `panel` y healthcheck de la API.
-- [ ] `.gitea/workflows/ci.yml` e `infra/ci/act-runner/*`.
-- [ ] Alta en infraestructura (Efraín, con lista de pasos): Actions en Gitea, runner en el servidor de Dokploy, secretos del repo, rama `staging` y webhook en Dokploy.
-- [ ] Primera entrega por pipeline (slices 3 a 6 a testing) y E2E.
+- [x] `push-harbor.sh`: publica también el panel, modo `CI=1`, salida `VERSION=`.
+- [x] `compose.staging.yml`: servicio `panel` y healthcheck de la API.
+- [x] `.gitea/workflows/ci.yml` (con el job `qa-testing`: Playwright y k6 contra testing tras cada entrega) e `infra/ci/act-runner/*`.
+- [x] Alta en infraestructura (Efraín, con lista de pasos): Actions en Gitea, runner en el servidor de Dokploy, secretos del repo, rama `staging` y webhook en Dokploy.
+- [ ] Primera entrega por pipeline (slices 3 a 6 a testing) y E2E (las imágenes desde `0.0.0.04` ya las publica `gitea-actions`, ver `docs/versions/version-history.md`; falta el E2E).
 - [ ] Documentación (wiki, AGENTS, README).
 
 ## Estado Actual
@@ -36,9 +36,9 @@ tags:
 | Área | Estado |
 |------|--------|
 | `push-harbor.sh` manual (solo API), historial `X.Y.Z.TT` | ✅ |
-| `compose.testing.yml` con `pull_policy: always`, secretos desde Dokploy/OpenBao | ✅ |
-| Dockerfile del panel | ✅ (sin desplegar) |
-| Runner de Gitea, workflow, secretos de CI | ⏳ |
+| `compose.staging.yml` con `pull_policy: always`, secretos desde Dokploy/OpenBao | ✅ |
+| Dockerfile del panel | ✅ (servicio `panel` en `compose.staging.yml`) |
+| Runner de Gitea, workflow, secretos de CI | ✅ (entregas de `gitea-actions` desde `0.0.0.04`) |
 
 ## Decisiones (2026-11-03)
 

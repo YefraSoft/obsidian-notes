@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: Slice 5 — Contactos
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-30
+actualizado: 2026-11-09
 estado: implementado
 proyecto: email-service
 padre: "[[email-service-plan]]"
@@ -67,27 +67,27 @@ Sigue las **Reglas de Trabajo** de [[email-service-plan]]: `IContactService`, `I
 ## Implementación
 
 ### Paso 1 — Base de datos
-- [ ] `CREATE UNIQUE INDEX uq_contacts_local_email ON contacts (LOWER(email)) WHERE kind = 'LOCAL';` en `infra/db.sql` y como ALTER en la wiki.
+- [x] `CREATE UNIQUE INDEX uq_contacts_local_email ON contacts (LOWER(email)) WHERE kind = 'LOCAL';` en `infra/db.sql` y como ALTER en la wiki.
 
 ### Paso 2 — API
-- [ ] `Application/Contacts`: `ContactRequest`, `ContactResponse`, `ContactCreatedResponse`, `ContactService`, `ContactQueries.GetAsync/StreamAsync`, `ContactPermissions.CanManage`.
-- [ ] `Infrastructure`: `ContactRepository` (`EmailExistsAsync`, `FindAsync`, `FindForUpdateAsync`, `Add`, `StreamAsync`).
-- [ ] `Api/Contacts/ContactController` (`GroupManagerPolicy`, rate limit Moderate) y `ContactModule` como `IEndpointMapper`; `JsonRegistry`.
+- [x] `Application/Contacts`: `ContactRequest`, `ContactResponse`, `ContactCreatedResponse`, `ContactService`, `ContactQueries.GetAsync/StreamAsync`, `ContactPermissions.CanManage`.
+- [x] `Infrastructure`: `ContactRepository` (`EmailExistsAsync`, `FindAsync`, `FindForUpdateAsync`, `Add`, `StreamAsync`).
+- [x] `Api/Contacts/ContactController` (`GroupManagerPolicy`, rate limit Moderate) y `ContactModule` como `IEndpointMapper`; `JsonRegistry`.
 
 ### Paso 3 — Panel
-- [ ] `api/contacts` (contratos y servicio), Actions `contacts.get/create/update/remove/restore`, `ContactFormModal`, acciones por fila, botones "Obtener", "Nuevo contacto" y "Exportar", ruta `pages/contactos/exportar.ts` con `exceljs`.
+- [x] `api/contacts` (contratos y servicio), Actions `contacts.get/create/update/remove/restore`, `ContactFormModal`, acciones por fila, botones "Obtener", "Nuevo contacto" y "Exportar", ruta `pages/contactos/exportar.ts` con `exceljs`.
 
 ### Paso 4 — Documentación
-- [ ] Wiki (API, Modelo de datos, Reglas de negocio, Panel, Capas, Seguridad), AGENTS y README.
+- [x] Wiki (API, Modelo de datos, Reglas de negocio, Panel, Capas, Seguridad), AGENTS y README.
 
 ## Criterios de Aceptación
 
-- [ ] Un `GroupManager` crea, edita, da de baja y restaura contactos locales; un manager sin ese rol recibe 403 y sin key 401.
-- [ ] Un correo repetido (con otra capitalización o de un contacto del Core) da 409.
-- [ ] Editar un contacto del Core cambia correo y nombre en local y la siguiente revisión lo muestra como diferencia.
-- [ ] Dar de baja un contacto del Core por REST da 409.
-- [ ] La exportación descarga un `.xlsx` con las filas del filtro actual.
-- [ ] `dotnet build` y `bun run build` correctos.
+- [x] Un `GroupManager` crea, edita, da de baja y restaura contactos locales; un manager sin ese rol recibe 403 y sin key 401.
+- [x] Un correo repetido (con otra capitalización o de un contacto del Core) da 409.
+- [x] Editar un contacto del Core cambia correo y nombre en local y la siguiente revisión lo muestra como diferencia.
+- [x] Dar de baja un contacto del Core por REST da 409.
+- [x] La exportación descarga un `.xlsx` con las filas del filtro actual.
+- [x] `dotnet build` y `bun run build` correctos.
 
 ## Nota para la v2 — importación
 

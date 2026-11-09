@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: Slice 4 — Sincronización con el Core
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-30
+actualizado: 2026-11-09
 estado: hecho
 proyecto: email-service
 padre: "[[email-service-plan]]"
@@ -86,32 +86,32 @@ Sigue las **Reglas de Trabajo** de [[email-service-plan]]: `ICoreContactSource` 
 ## Implementación
 
 ### Paso 1 — Base de datos
-- [ ] `contacts.kind` con `CHECK`, unicidad `(kind, core_id)` e índice `(kind, deleted_at)`; `ALTER` en la wiki; scaffold de `Contact`.
+- [x] `contacts.kind` con `CHECK`, unicidad `(kind, core_id)` e índice `(kind, deleted_at)`; `ALTER` en la wiki; scaffold de `Contact`.
 
 ### Paso 2 — API
-- [ ] `Application/Sync` (puerto, diff, servicio, contratos) y `Application/Contacts` (queries y contratos).
-- [ ] `Infrastructure/CoreSync` (opciones, factory, sentencias SQL, lector, health check `coredb`) y repositorios.
-- [ ] `SyncController` + `SyncModule`, `ContactModule` (GraphQL `contacts`), rate limit `Sync`, excepciones `CoreNotConfigured`, `CoreEmpty`, `CoreUnavailable`.
+- [x] `Application/Sync` (puerto, diff, servicio, contratos) y `Application/Contacts` (queries y contratos).
+- [x] `Infrastructure/CoreSync` (opciones, factory, sentencias SQL, lector, health check `coredb`) y repositorios.
+- [x] `SyncController` + `SyncModule`, `ContactModule` (GraphQL `contacts`), rate limit `Sync`, excepciones `CoreNotConfigured`, `CoreEmpty`, `CoreUnavailable`.
 
 ### Paso 3 — Panel
-- [ ] `api/contacts`, `api/sync`, Actions, `ContactsScreen`, `SyncReviewModal`, página `/contactos`, acceso en `PanelAccess`.
+- [x] `api/contacts`, `api/sync`, Actions, `ContactsScreen`, `SyncReviewModal`, página `/contactos`, acceso en `PanelAccess`.
 
 ### Paso 4 — Documentación
-- [ ] Wiki (API, Modelo de datos, Despliegue, Panel, Capas, Seguridad), AGENTS y README.
+- [x] Wiki (API, Modelo de datos, Despliegue, Panel, Capas, Seguridad), AGENTS y README.
 
 ## Criterios de Aceptación
 
-- [ ] Una segunda revisión sin cambios en el Core devuelve las tres listas vacías.
-- [ ] Una baja local (`subscribed = false`) sobrevive a una aplicación.
-- [ ] Un contacto que desaparece del Core aparece en `removed` y, al aplicarlo, queda con `deleted_at` sin perder su historial.
-- [ ] Si el Core no responde o no está configurado, la API sigue funcionando y responde 503 con su `code`.
-- [ ] La cuarta petición de sincronización en 5 minutos recibe 429.
-- [ ] `dotnet build` y `bun run build` correctos.
+- [x] Una segunda revisión sin cambios en el Core devuelve las tres listas vacías.
+- [x] Una baja local (`subscribed = false`) sobrevive a una aplicación.
+- [x] Un contacto que desaparece del Core aparece en `removed` y, al aplicarlo, queda con `deleted_at` sin perder su historial.
+- [x] Si el Core no responde o no está configurado, la API sigue funcionando y responde 503 con su `code`.
+- [x] La cuarta petición de sincronización en 5 minutos recibe 429.
+- [x] `dotnet build` y `bun run build` correctos.
 
 ## Preguntas abiertas
 
-- ¿`CONCAT_WS` en lugar de `CONCAT` para que `secondName` NULL no anule el nombre? (las consultas no se cambian sin el visto bueno de Efraín).
-- ¿Filtrar vigencia (`status`/`opc`) en las consultas del Core o dejar que entren todos los registros?
+- ¿`CONCAT_WS` en lugar de `CONCAT` para que `secondName` NULL no anule el nombre? (las consultas no se cambian sin el visto bueno de Efraín). Aplazado a la versión 1.1.0 (decisión 2026-11-09).
+- ¿Filtrar vigencia (`status`/`opc`) en las consultas del Core o dejar que entren todos los registros? Aplazado a la versión 1.1.0 (decisión 2026-11-09).
 
 ## Relacionado
 

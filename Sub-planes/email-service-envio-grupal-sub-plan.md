@@ -98,6 +98,11 @@ Seguimos los pasos CREAR → MODIFICAR → ENLAZAR con un commit por paso:
   - Más adelante el servidor SMTP será **Stalwart**. Antes de subir la concurrencia hay que medir la capacidad del servicio y la de Stalwart, para no saturarlos.
 - **Grupos grandes:** expandirlos por tandas en lugar de en una sola transacción.
 
+Revisión de fases 1–3 (2026-11-09):
+
+- **Entra a la Fase 4:** liberar la suscripción de Valkey de `BatchQueries.WatchAsync` aunque su resultado nunca se enumere.
+- **Deuda anotada (no entra):** `BatchReconciler` corre en cada réplica sin bloqueo entre ellas; el cierre es atómico, así que solo repite trabajo.
+
 ## Criterios de Aceptación
 
 - [x] Un grupo no asignado al consumidor da 403 con `code: ResourceNotGranted`. Una plantilla no asignada con ámbito `GROUP` también.

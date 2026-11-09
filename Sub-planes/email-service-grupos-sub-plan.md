@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: Slice 6 — Grupos, miembros y asignaciones
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-11-03
+actualizado: 2026-11-09
 estado: implementado
 proyecto: email-service
 padre: "[[email-service-plan]]"
@@ -71,19 +71,19 @@ Sigue las **Reglas de Trabajo** de [[email-service-plan]]: `IGroupService`, `IGr
 ## Implementación
 
 ### Paso 1 — Base de datos
-- [ ] `ALTER TABLE groups ADD COLUMN id_manager UUID` (FK a `manager`, `ON DELETE SET NULL`), `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`, `ix_groups_manager` y `CREATE UNIQUE INDEX uq_groups_name ON groups (LOWER(name)) WHERE deleted_at IS NULL;` en `infra/db.sql` y como ALTER en la wiki. Entidad `Group`/`Manager` y `EmailDbContext` editados a mano.
+- [x] `ALTER TABLE groups ADD COLUMN id_manager UUID` (FK a `manager`, `ON DELETE SET NULL`), `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`, `ix_groups_manager` y `CREATE UNIQUE INDEX uq_groups_name ON groups (LOWER(name)) WHERE deleted_at IS NULL;` en `infra/db.sql` y como ALTER en la wiki. Entidad `Group`/`Manager` y `EmailDbContext` editados a mano.
 
 ### Paso 2 — API
-- [ ] `Application/Groups`: contratos (`GroupRequest`, `GroupResponse`, `AddGroupMembersRequest/Response`, `RemoveGroupMembersRequest`, `ConsumerGroupsRequest/Response`…), builder, puertos, `GroupService`, `GroupGrantService`, `GroupQueries`; `Application/Permissions/GroupPermissions` (`RequireManageAsync` por dueño, `RequireSendAsync` para el slice 8).
-- [ ] `Infrastructure`: `GroupRepository`, `GroupMemberRepository` (inserción por lotes con `ON CONFLICT DO NOTHING`), `GroupGrantRepository`; `ContactQueryable` extraído de `ContactRepository`.
-- [ ] Hooks de salida automática en `ContactService.DeleteAsync` y en la aplicación de bajas de `SyncService`.
-- [ ] `Api/Groups`: `GroupController` (`GroupManagerPolicy`, Moderate), `ConsumerGroupController` (`AdminPolicy`), `GroupModule` con los campos GraphQL; `JsonRegistry`; tipos GraphQL.
+- [x] `Application/Groups`: contratos (`GroupRequest`, `GroupResponse`, `AddGroupMembersRequest/Response`, `RemoveGroupMembersRequest`, `ConsumerGroupsRequest/Response`…), builder, puertos, `GroupService`, `GroupGrantService`, `GroupQueries`; `Application/Permissions/GroupPermissions` (`RequireManageAsync` por dueño, `RequireSendAsync` para el slice 8).
+- [x] `Infrastructure`: `GroupRepository`, `GroupMemberRepository` (inserción por lotes con `ON CONFLICT DO NOTHING`), `GroupGrantRepository`; `ContactQueryable` extraído de `ContactRepository`.
+- [x] Hooks de salida automática en `ContactService.DeleteAsync` y en la aplicación de bajas de `SyncService`.
+- [x] `Api/Groups`: `GroupController` (`GroupManagerPolicy`, Moderate), `ConsumerGroupController` (`AdminPolicy`), `GroupModule` con los campos GraphQL; `JsonRegistry`; tipos GraphQL.
 
 ### Paso 3 — Panel
-- [ ] `api/groups`, `actions/groups`, `PanelAccess` (`/grupos` → `GroupManager`), `GroupsScreen`, `GroupFormModal`, `GroupMembersScreen`, `AddMembersModal`, `ConsumerGroupsModal` y botón "Grupos" en consumidores.
+- [x] `api/groups`, `actions/groups`, `PanelAccess` (`/grupos` → `GroupManager`), `GroupsScreen`, `GroupFormModal`, `GroupMembersScreen`, `AddMembersModal`, `ConsumerGroupsModal` y botón "Grupos" en consumidores.
 
 ### Paso 4 — Documentación
-- [ ] Wiki (API, Modelo de datos, Reglas de negocio, Seguridad, Panel, Capas, Despliegue con el ALTER), AGENTS (quitar la deuda de `GroupPermissions`, nota del slice 9) y README.
+- [x] Wiki (API, Modelo de datos, Reglas de negocio, Seguridad, Panel, Capas, Despliegue con el ALTER), AGENTS (quitar la deuda de `GroupPermissions`, nota del slice 9) y README.
 
 ## Criterios de Aceptación
 

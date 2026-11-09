@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: Slice 3 — Plantillas
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-11-03
+actualizado: 2026-11-09
 estado: en-progreso
 proyecto: email-service
 padre: "[[email-service-plan]]"
@@ -35,7 +35,7 @@ tags:
 | Área | Estado |
 |------|--------|
 | Tablas `templates` (con `content_json`) y `consumer_templates` (con `scope`) | ✅ |
-| `TemplatePermissions` (`CanManage`, `RequireManage`, `RequireUseAsync`) en `Application/Permissions` | ✅ (aún nadie llama a `RequireUseAsync`: lo usan los slices de envío) |
+| `TemplatePermissions` (`CanManage`, `RequireManage`, `RequireUseAsync`) en `Application/Permissions` | ✅ (`RequireUseAsync` lo llaman `MessageService` y `GroupSendService`) |
 | Endpoints REST, GraphQL `templates`, contratos, builders, sanitizador y renderizador | ✅ verificados con curl |
 | Panel: `/plantillas`, `/plantillas/nueva`, `/plantillas/[id]` y modal de asignación | ✅ verificado en Chrome |
 | Panel: borrador automático en `localStorage` (guardado al perder el foco en cada campo y en el cuerpo; "Recuperar borrador" / "Descartar" en el editor y aviso con enlaces en la lista; se borra al guardar) | ✅ (2026-10-30, verificado en Chrome) |
@@ -98,16 +98,16 @@ Refactors hechos en el camino: `RegexLibrary`/`IRegexLibrary` (todas las regex e
 
 - [x] Un `TemplateManager` crea, edita y desactiva plantillas; un consumidor o manager sin ese rol recibe 403 (las rutas de gestión de plantillas devuelven 403; el 401 uniforme es solo de las de Admin).
 - [x] Solo el Admin asigna plantillas a consumidores, con su tipo (un manager recibe 401).
-- [ ] Una plantilla inactiva no se ofrece para enviar; el 1 a 1 y el envío a grupos exigen la asignación del tipo correspondiente (la regla está en `TemplatePermissions.RequireUseAsync`; se ejercita en los slices de envío).
+- [x] Una plantilla inactiva no se ofrece para enviar; el 1 a 1 y el envío a grupos exigen la asignación del tipo correspondiente (`TemplatePermissions.RequireUseAsync`, llamado desde `Application/Messages/MessageService.cs` y `Application/Batches/GroupSendService.cs`; revisión 2026-11-09).
 - [x] La vista previa rellena las variables, codifica los valores y avisa de las que faltan.
 - [x] El HTML guardado no contiene scripts, eventos `on*` ni URLs `javascript:`.
 - [x] `dotnet build` y `bun run build` correctos.
 
 ## Pendientes para otros slices
 
-- Volver a sanear el HTML tras sustituir variables en el envío (un valor puede acabar en un `href` o `src`).
-- Si los managers deben listar plantillas, abrir GraphQL con autorización por campo.
-- Los endpoints se guardan en Insomnia al cerrar la Fase 2.
+- [x] Volver a sanear el HTML tras sustituir variables en el envío (un valor puede acabar en un `href` o `src`): lo hace `MessageDispatchService` en el worker.
+- [ ] Si los managers deben listar plantillas, abrir GraphQL con autorización por campo.
+- [x] Los endpoints se guardan en Insomnia al cerrar la Fase 2 (`infra/test/insomnia/EmailSendService.insomnia.json`).
 
 ## Relacionado
 
