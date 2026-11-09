@@ -3,8 +3,8 @@ tipo: sub-plan
 titulo: Slice 4 — Sincronización con el Core
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-29
-estado: en-curso
+actualizado: 2026-10-30
+estado: hecho
 proyecto: email-service
 padre: "[[email-service-plan]]"
 tags:
@@ -23,20 +23,44 @@ tags:
 ## Pendientes
 
 - [x] Definir tablas, campos y poblaciones del Core (fase de detallado, 2026-10-29).
-- [ ] Consulta SQL de aspirantes (`CapAspirantes`); las de estudiantes, personal y administrativos ya están.
-- [ ] Lector del Core (`MySqlConnector`) con credenciales en `Secrets`.
-- [ ] Revisión (`POST sync/{kind}`) y aplicación (`POST sync/{kind}/apply`) por población.
-- [ ] Lista de contactos por GraphQL (adelantada del slice 5) y sección Contactos del panel con el modal de revisión.
-- [ ] Documentación (wiki, AGENTS, README).
+- [x] Consultas SQL de las cuatro poblaciones (aspirantes entregada el 2026-10-30).
+- [x] Lector del Core (`MySqlConnector`) con credenciales en OpenBao / `Secrets`.
+- [x] Revisión (`POST sync/{kind}`) y aplicación (`POST sync/{kind}/apply`) por población; rate limit `Sync` por IP y endpoint.
+- [x] Lista de contactos por GraphQL (adelantada del slice 5) y sección Contactos del panel con el modal de revisión.
+- [x] Documentación (wiki, AGENTS, README) — 2026-10-30.
+- [x] Permisos: el `GroupManager` sincroniza y entra a `/contactos` (2026-10-30).
+- [x] Deploy a testing (imagen 0.0.0.03, base regenerada con `infra/db.sql`, variables `EMAIL_SENDER_CORE_DB_*` en Dokploy) y prueba end-to-end desde el panel (2026-10-30).
 
 ## Estado Actual
 
 | Área | Estado |
 |------|--------|
 | Tabla `contacts` con `core_id`, `source`, `subscribed`, `unsubscribed_*`, `deleted_at` | ✅ |
-| `contacts.kind` (población) y unicidad `(kind, core_id)` | ⏳ |
-| Conexión al Core, revisión y aplicación por población | ⏳ |
-| Panel (sección Contactos con sincronización) | ⏳ |
+| `contacts.kind` (población) y unicidad `(kind, core_id)` | ✅ |
+| Conexión al Core, revisión y aplicación por población (probado en local contra el Core real) | ✅ |
+| Panel (sección Contactos con sincronización) | ✅ |
+| Deploy a testing y prueba end-to-end | ✅ |
+
+## Ajustes tras la primera prueba (2026-10-30)
+
+- Rate limit `Sync` independiente por endpoint (IP + ruta): agotar estudiantes no afecta a aspirantes.
+- La revisión devuelve las filas omitidas con motivo (`EMPTY_EMAIL`, `INVALID_EMAIL`, `EMAIL_TOO_LONG`, `DUPLICATE_CORE_ID`); el panel las muestra en una vista aparte ("Contactos omitidos").
+- Modal rediseñado con la guía `frontend-design`: resumen en cifras (acento `primary`, sin rojo ni verde), buscador y chips de filtro en cliente, lista `[casilla] [nombre] [correo]` con alto fijo y paginación de 25, icono para ver diferencias.
+- `FetchService` del panel admite timeout por petición (sincronización 180 s) y registra las peticiones fallidas (`[api] …`).
+- Primera revisión real: ~87.900 estudiantes leídos, ~4.400 omitidos por correo vacío; la consulta tarda menos de un segundo.
+- **El `GroupManager` también sincroniza** (revisa y aplica) y entra a `/contactos`; se descartó un rol `ContactManager` con alcances: para enviar a un subconjunto (p. ej. Finanzas) se crea un grupo.
+
+## Cierre (2026-10-30)
+
+Slice cerrado tras el E2E en testing (API 0.0.0.03, panel contra `http://192.168.14.131:5037`):
+- Revisión y aplicación de aspirantes contra el Core real desde el panel; los contactos quedan listados.
+- Managers y consumidor de prueba creados, plantilla con variable creada, previsualizada y asignada; acceso por rol verificado (GroupManager → Contactos, TemplateManager → Plantillas).
+- Incidencias resueltas durante el deploy: Dokploy reutilizaba la imagen `latest` en caché (`pull_policy: always` en el compose); la contraseña del Core con `#` se truncaba en el `.env` de Dokploy (se cambió la contraseña); bucle de redirección del panel ante un 401 (el middleware cierra la sesión al llegar a `/` con `notice`).
+- Criterios de aceptación cumplidos: segunda revisión sin cambios devuelve listas vacías; la baja local sobrevive a la aplicación; los contactos que desaparecen del Core quedan con `deleted_at`; sin Core la API sigue funcionando (503 en `sync/*`, `coredb` Degraded); la cuarta petición por endpoint en 5 minutos recibe 429.
+
+## Nota para la v2 — profundidad de los filtros
+
+Añadir a las consultas del Core columnas de contexto (plantel, carrera y grupo para estudiantes; departamento para administrativos; materia para docentes) con sus `JOIN`, copiarlas a `contacts` como columnas nullable y exponerlas como filtros de la lista, para que el `GroupManager` arme grupos filtrados (p. ej. estudiantes de Sistemas). Solo añade campos al modelo que se lee del Core; la revisión y la aplicación no cambian.
 
 ## Decisiones (fase de detallado, 2026-10-29)
 
@@ -86,8 +110,8 @@ Sigue las **Reglas de Trabajo** de [[email-service-plan]]: `ICoreContactSource` 
 
 ## Preguntas abiertas
 
-- Consulta SQL de aspirantes (pendiente de Efraín).
-- ¿`CONCAT_WS` en lugar de `CONCAT` para que `secondName` NULL no anule el nombre?
+- ¿`CONCAT_WS` en lugar de `CONCAT` para que `secondName` NULL no anule el nombre? (las consultas no se cambian sin el visto bueno de Efraín).
+- ¿Filtrar vigencia (`status`/`opc`) en las consultas del Core o dejar que entren todos los registros?
 
 ## Relacionado
 

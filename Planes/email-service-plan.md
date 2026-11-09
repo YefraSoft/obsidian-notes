@@ -3,7 +3,7 @@ tipo: plan
 titulo: EmailSendService — Plan de Desarrollo
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-29
+actualizado: 2026-11-09
 estado: en-progreso
 proyecto: email-service
 tags:
@@ -11,6 +11,8 @@ tags:
   - email-service
   - dotnet
   - rabbitmq
+  - grpc
+  - redis
   - astro
   - vertical-slices
   - clean-architecture
@@ -78,6 +80,7 @@ Todo punto de entrada (controller REST, resolver GraphQL, consumidor de RabbitMQ
 - Listas: `page` y `pageSize` van en el cuerpo (con tope); respuesta `{ items, page, pageSize, total }`; filtros como *input* y orden como *enum*.
 - GraphQL con la misma `X-Api-Key` y las mismas políticas; profundidad y complejidad máximas; introspección apagada en producción.
 - Rutas en plural y en kebab-case; fechas en UTC con formato ISO; `Idempotency-Key` solo en los `POST` de envío.
+- **gRPC para las apps consumidoras** (decisión del 2026-11-05): los envíos (`SendMessage` en el slice 7, `SendToGroup` en el 8) se exponen también por gRPC en un puerto propio solo HTTP/2 (`8081`), con la misma `x-api-key` en los metadata y las mismas políticas; `POST messages` REST se conserva para el panel y curl. Contrato `.proto` en `Src/Api/Messages/Protos`. Las consultas siguen por REST y GraphQL.
 
 ## 5. Seguridad y acceso
 
@@ -103,13 +106,17 @@ Todo punto de entrada (controller REST, resolver GraphQL, consumidor de RabbitMQ
 
 ## 8. Mensajería
 
-- La API **valida** (rol, plantilla, alcance) y **publica** en RabbitMQ; responde 202 con un `MessageId` derivado del consumidor y la `Idempotency-Key` (así se evita duplicar sin guardar estado en la API).
+- La API **valida** (rol, plantilla, alcance) y **publica** en RabbitMQ; responde 202 con un `MessageId` derivado del consumidor y la `Idempotency-Key`.
+- **Idempotencia en Redis** (patrón Stripe, 2026-11-05): con key, la API busca `idem:{consumidor}:{key}`; si existe con la misma huella del cuerpo devuelve el mismo `MessageId` sin reprocesar, si la huella difiere responde 409 `IdempotencyKeyReused`; si no existe, valida, publica y guarda (`SET NX`, 24 h). Redis caído con key → 503. El id derivado y el `ON CONFLICT` del worker son la red de seguridad.
 - **El worker es dueño del registro:** lo crea en `QUEUED`, envía por SMTP y lo deja en `SENT`, `RETRYING` o `FAILED`. `SEEN` llega por el píxel de apertura.
 - Entrega *at-least-once*: ack manual, reintentos con espera creciente y cola de fallidos.
 
 ## 9. Datos
 
-- **Sin migraciones:** EF solo consume la base; la base de producción vive aparte y la administra Efraín.
+- **Sin migraciones (por ahora):** EF solo consume la base; la base de producción vive aparte y la administra Efraín.
+  - **Cambio previsto en el slice 9** (decisión del 2026-11-09): pasar a **migraciones automáticas con EF Core**.
+  - Se hará con una migración base igual a `db.sql`, marcada como aplicada en las bases que ya existen.
+  - Hasta entonces sigue el `ALTER` a mano. Ver [[email-service-seguimiento-bajas-sub-plan]].
 - `db.sql` es referencia del esquema; cada slice deja listo el `ALTER` que Efraín aplica.
 - Las entidades se generan por scaffold hacia `Core/Entities`.
 
@@ -224,9 +231,11 @@ sequenceDiagram
     participant W as Worker
     participant DB as PostgreSQL
     participant SMTP as SMTP
-    C->>API: POST /messages + Idempotency-Key
+    C->>API: SendMessage (gRPC) o POST /messages (REST) + Idempotency-Key
+    API->>API: con key, consulta Redis: mismo cuerpo → mismo MessageId; otro cuerpo → 409
     API->>API: valida rol, plantilla y alcance, y calcula MessageId
     API->>MQ: publica notificacion.email.individual
+    API->>API: guarda la key en Redis (SET NX, 24 h)
     API-->>C: 202 + MessageId
     MQ->>W: entrega el mensaje
     W->>DB: crea el registro QUEUED (ignora duplicados)
@@ -249,7 +258,31 @@ sequenceDiagram
 - [ ] Pruebas: Efraín escribe las unitarias, el equipo las de integración y k6 mide el rendimiento (la carpeta `EmailSendService.Tests/` se queda).
 - [x] Slice 3 (plantillas) implementado en API y panel, con `@maily-to/core` para el editor; probado en local.
 - [ ] Deploy del slice de plantillas a testing (aplicar el `ALTER` en la base) y fase de dudas.
-- [ ] Slice 4 (sincronización con el Core) en curso: detallado cerrado el 2026-10-29 como **revisión asistida por población** (ver [[email-service-sync-core-sub-plan]]); falta la consulta SQL de aspirantes.
+- [x] Slice 4 (sincronización con el Core) implementado el 2026-10-30 como **revisión asistida por población** (ver [[email-service-sync-core-sub-plan]]), probado en local contra el Core real; la lista de contactos por GraphQL y la sección Contactos del panel quedan adelantadas para el slice 5.
+- [x] Ajuste del slice 4 (2026-10-30): el `GroupManager` revisa y aplica la sincronización y entra a `/contactos`; se descartó un rol `ContactManager` con alcances (para un subconjunto se crea un grupo). Nota v2 en el sub-plan: profundidad de filtros en las consultas del Core.
+- [x] Deploy a testing de los slices 3 y 4 (imagen 0.0.0.03, base regenerada, variables del Core en Dokploy) y E2E desde el panel (2026-10-30). Slice 4 cerrado.
+- [x] Slice 5 (contactos) implementado y probado en local el 2026-10-30: alta, edición y baja de locales, edición de cualquier contacto, exportación a Excel desde el panel (importación a v2). Ver [[email-service-contactos-sub-plan]].
+- [ ] Deploy a testing de los slices 3 a 5 al cerrar la Fase 2 (imagen nueva y sus `ALTER`) y E2E.
+- [x] Slice 6 (grupos) implementado y probado en local (2026-10-30, docs 2026-11-03): grupos con **dueño** (`groups.id_manager`; el `GroupManager` gestiona solo los suyos, el Admin todos), nombre único global, miembros por ids, población (con exclusiones) o desde otro grupo, salida automática de los contactos dados de baja, y `consumer_group_roles` solo con `GroupSender` asignado por el Admin. Ver [[email-service-grupos-sub-plan]]. Con esto la Fase 2 queda implementada en local.
+- [x] Panel: borradores de plantilla en `localStorage` (guardado al perder el foco, recuperación desde el editor y la lista) — 2026-10-30.
+- [ ] CI/CD (en curso desde el 2026-11-03): Gitea Actions con runner en el servidor de Dokploy, imágenes de API y panel en Harbor, entrega a testing con push a `staging`, etiquetas `v*` para producción más adelante. Ver [[email-service-cicd-sub-plan]].
+- [ ] Cerrar la Fase 2 con la primera entrega por pipeline: slices 3 a 6 a testing (`ALTER` de plantillas, sincronización, contactos y grupos a mano), E2E, fase de dudas y endpoints en Insomnia. Después, Fase 3 (envío).
+- [ ] Al cerrar la Fase 2, guardar los endpoints en Insomnia.
+- [x] Bitácora de errores del slice 7 (ER-014 a ER-032) corregida y verificada de punta a punta con Gmail (2026-11-06).
+- [x] Slice 8 (envío a grupos y lotes) implementado y verificado en local (2026-11-09), con lotes de 2036 contactos.
+  - Incluye REST, gRPC `SendToGroup`, el avance en vivo por SSE, el reconciliador y el panel.
+  - De las pruebas salió **ER-033** (direcciones con "ñ" antes de la arroba): corregido con SMTPUTF8.
+  - Falta el deploy a staging (`ALTER` de `batches`) y la fase de dudas. Ver [[email-service-envio-grupal-sub-plan]].
+- [ ] **Siguiente versión:** consumo concurrente de la cola de envío y reparto entre lotes.
+  - Hoy se procesa un mensaje a la vez y los lotes salen en orden FIFO.
+  - El SMTP pasará a **Stalwart**. Antes de subir la concurrencia hay que medir la capacidad del servicio y la de Stalwart, para no saturarlos.
+- [ ] **Slice 9: migraciones automáticas con EF Core** en lugar de los `ALTER` a mano (regla 9).
+  - Migración base que reproduzca `db.sql` y se marque como aplicada en las bases que ya existen.
+  - Hay que decidir quién las aplica. Ver [[email-service-seguimiento-bajas-sub-plan]].
+- [ ] Fase 3 iniciada el 2026-11-04 con el slice 7 (envío 1 a 1): SMTP nativo tras el puerto `IEmailSender`, 3 reintentos con colas de espera y dlq, error propio por cuota de Google, `messages.id_consumer` nullable para los envíos del Admin. Bloque CREAR (C1–C6) hecho el 2026-11-05. Ver [[email-service-envio-individual-sub-plan]].
+- [ ] Ajuste del slice 7 (2026-11-05): **las apps envían por gRPC** (puerto 8081 solo HTTP/2, `x-api-key` en metadata, `.proto` en `Api/Messages/Protos`; REST se conserva para el panel) y la **idempotencia vuelve a Redis** con el patrón de Stripe (mismo id sin reprocesar, 409 si se reutiliza la key con otro cuerpo, 503 sin Redis); el id derivado queda como red de seguridad. El servidor es **Valkey** (`valkey/valkey:9.0-alpine`, fork BSD compatible con Redis; el código conserva los nombres `Redis:*`): entra en los compose, en `health/ready` y en Dokploy (`EMAIL_SENDER_VALKEY_PASSWORD`, `EMAIL_SENDER_GRPC_PORT`).
+- [ ] Compose de Dokploy en Swarm (2026-11-05): `compose.testing.yml` → `compose.staging.yml` (solo API y panel) y nuevo `compose.servicios.yml`, stack compartido con RabbitMQ en clúster de 2 nodos y Valkey primario + réplica sobre `dokploy-network`, reutilizable por otras apps; las colas pasan a tipo quorum. Detalle en la decisión 14 del sub-plan.
+- [x] Documentación de entrega para QA de la Fase 2 (2026-11-03): [[email-service-datos-maestros-testing]] (actores, flujo, reglas, entornos de testing, los 24 endpoints con request/response, pantallas del panel y nota de pruebas); sincronizada a `3. Operación/Testing/` en Nextcloud.
 
 # Estado Actual (resumen ejecutivo)
 
@@ -266,9 +299,9 @@ sequenceDiagram
 | GraphQL.NET (solo consultas, `POST /graphql`, solo Admin) | ✅ piloto: lista de consumidores |
 | Validación nativa y `Platform/Validations` | ✅ |
 | Módulos por responsabilidad y `IResponseBuilder` | ✅ |
-| Mensajería RabbitMQ (publicador y consumidor) | ⚠ handler provisional que solo escribe en el log |
-| Endpoints de negocio (plantillas, contactos, grupos, envíos) | ⏳ |
-| Panel Astro | ✅ login solo Admin, consumidores, managers y salud |
+| Mensajería RabbitMQ: colas quorum, reintentos con colas de espera, dlq y cola grupal | ✅ worker SMTP real (slice 7) y expansión y cierre de lotes (slice 8) |
+| Endpoints de negocio (plantillas, contactos, grupos, envíos 1 a 1 y a grupos) | ✅ en local; seguimiento y bajas en el slice 9 |
+| Panel Astro | ✅ login por identidad (Admin, Manager, Consumer), datos maestros, envíos y lotes con avance en vivo |
 | Testing: imagen de la API en Harbor, `compose.testing.yml` en Dokploy, base externa y secretos como `Secrets__*` (OpenBao opcional) | ✅ |
 
 | Fase / Slice | Dominio | Estado |
@@ -276,12 +309,12 @@ sequenceDiagram
 | 1 | Auth (key cifrada con su dominio: Admin, Consumer, Manager) — [[email-service-auth-sub-plan]] | ✅ hecha |
 | 2 | Consumidores, managers y keys — [[email-service-consumidores-keys-sub-plan]] | ✅ hecha |
 | 3 | Plantillas — [[email-service-plantillas-sub-plan]] | ✅ Implementada (falta deploy a testing y refinamiento) |
-| 4 | Sincronización con el Core — [[email-service-sync-core-sub-plan]] | ⏳ Pendiente |
-| 5 | Contactos — [[email-service-contactos-sub-plan]] | ⏳ Pendiente |
-| 6 | Grupos, miembros y asignaciones — [[email-service-grupos-sub-plan]] | ⏳ Pendiente |
-| 7 | Envío 1 a 1 y worker SMTP — [[email-service-envio-individual-sub-plan]] | ⏳ Pendiente |
-| 8 | Envío a grupos y lotes — [[email-service-envio-grupal-sub-plan]] | ⏳ Pendiente |
-| 9 | Seguimiento y bajas — [[email-service-seguimiento-bajas-sub-plan]] | ⏳ Pendiente |
+| 4 | Sincronización con el Core — [[email-service-sync-core-sub-plan]] | ✅ hecha (en testing, E2E 2026-10-30) |
+| 5 | Contactos — [[email-service-contactos-sub-plan]] | ✅ Implementado (falta deploy a testing y E2E) |
+| 6 | Grupos, miembros y asignaciones — [[email-service-grupos-sub-plan]] | ✅ Implementado (falta deploy a testing y E2E) |
+| 7 | Envío 1 a 1 (gRPC y REST), idempotencia en Valkey y worker SMTP — [[email-service-envio-individual-sub-plan]] | ✅ Implementado, documentado y verificado en local (bitácora cerrada el 2026-11-06); falta deploy a staging y dudas |
+| 8 | Envío a grupos y lotes — [[email-service-envio-grupal-sub-plan]] | ✅ Implementado y verificado en local (2026-11-09); falta deploy a staging |
+| 9 | Seguimiento y bajas, más migraciones automáticas con EF — [[email-service-seguimiento-bajas-sub-plan]] | ⏳ Pendiente |
 
 # Decisiones de Diseño (vigentes)
 
@@ -294,18 +327,20 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 5. El nivel de log vive en la clase base de cada excepción (regla 6).
 6. Validación nativa y respuestas por `IResponseBuilder` (regla 7).
 7. El worker es dueño del registro del mensaje (regla 8).
-8. Sin migraciones; entidades por scaffold a `Core/Entities` (regla 9).
+8. Sin migraciones; entidades por scaffold a `Core/Entities` (regla 9). En el slice 9 se adoptan las migraciones automáticas con EF Core (2026-11-09).
+12. El consumidor ve en vivo el avance de **sus propios lotes**: correo y estado, sin ids ni errores. Lo recibe por SSE, con pub/sub de Valkey y el proxy del panel. El detalle y la lista de lotes son solo del Admin (2026-11-06).
 9. Sin OpenAPI; documentación en `.md`; reparto de pruebas; trabajo en `main` (regla 10).
 10. Rutas de gestión sin prefijo `admin`; dar de alta contactos locales (`source = LOCAL`) lo hacen `GroupManager` y Admin; los contactos del Core llegan por sincronización.
+11. Las apps consumidoras envían por **gRPC** (puerto HTTP/2 propio, misma key en metadata); el panel usa REST y GraphQL. La idempotencia de los envíos vive en **Redis** (patrón Stripe) con el `MessageId` derivado como red de seguridad (reglas 4 y 8, 2026-11-05).
 
 # Arquitectura y Notas Técnicas
 
-- **Stack:** .NET 10, EF Core + Npgsql, RabbitMQ.Client, GraphQL.NET, OpenBao (AppRole + KV v2), Astro 7 híbrido con Actions y Bun.
-- **Pipeline HTTP:** manejo de errores → rate limiting → autenticación y autorización → validación nativa → controller.
+- **Stack:** .NET 10, EF Core + Npgsql, RabbitMQ.Client, GraphQL.NET, Grpc.AspNetCore (envíos de las apps), StackExchange.Redis (idempotencia), OpenBao (AppRole + KV v2), Astro 7 híbrido con Actions y Bun.
+- **Pipeline HTTP:** manejo de errores → rate limiting → autenticación y autorización → validación nativa → controller. Para gRPC, el mismo pipeline en el puerto 8081 y un interceptor que traduce las excepciones de dominio a `RpcException` (las excepciones de un método gRPC no pasan por el manejador de errores HTTP).
 - **Mensajería:** exchange `notificacion` (direct, durable) y una cola por canal y alcance `notificacion.<canal>.<alcance>`; hoy solo existe `notificacion.email.individual`.
 - **Módulos:** cada funcionalidad es un `IModule` que implementa solo lo que necesita: `IServiceInstaller` (DI), `IEndpointMapper` (rutas) e `IPipelineStep` (pipeline, con `Order`).
 - **Ejecución local:** `bao login` → `make env` → `make init` → `make up APP=1`; el panel con `bun --bun run dev` en `EmailServiceManagment`.
-- **Deuda conocida:** `GroupPermissions` aún lee `EmailDbContext` (vive en `Platform/Auth/Permissions`); se pasa a puertos en el slice 6. `TemplatePermissions` ya está en `Application/Permissions` con puerto. `Actor.cs` importa `Platform.Auth`, contra la regla de dependencias.
+- **Deuda conocida:** `Actor.cs` importa `Platform.Auth`, contra la regla de dependencias. (`GroupPermissions` y `TemplatePermissions` ya viven en `Application/Permissions` con puertos.) La baja de suscripción del slice 9 debe llamar a `IGroupMemberRepository.RemoveContactsAsync` para sacar al contacto de sus grupos.
 - **Módulos:** cada dominio es un `IModule` (`ConsumerModule`, `ManagerModule`, `TemplateModule`…) con las capacidades `IServiceInstaller`, `IEndpointMapper`, `IQueryMapper` (campos GraphQL) e `IPipelineStep`; se descubren por reflexión en orden alfabético. Las regex viven en `Core/Text/RegexLibrary` (`IRegexLibrary`).
 
 # Archivos Clave del Proyecto
@@ -346,16 +381,19 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 # FASE 2 — Datos maestros (Slices 3 a 6)
 
 > **Objetivo:** plantillas, base de contactos (sincronizada con el Core y local) y grupos con sus asignaciones.
-> **Estado:** ⏳ Pendiente — [[email-service-plantillas-sub-plan]], [[email-service-sync-core-sub-plan]], [[email-service-contactos-sub-plan]], [[email-service-grupos-sub-plan]].
+> **Estado:** ✅ Implementada en local (2026-11-03); falta el deploy a testing de los slices 3, 5 y 6, el E2E y la fase de dudas — [[email-service-plantillas-sub-plan]], [[email-service-sync-core-sub-plan]], [[email-service-contactos-sub-plan]], [[email-service-grupos-sub-plan]].
 
 # FASE 3 — Envío (Slices 7 y 8)
 
 > **Objetivo:** enviar correos 1 a 1 y a grupos con el worker SMTP real, estados y lotes.
-> **Estado:** ⏳ Pendiente — [[email-service-envio-individual-sub-plan]], [[email-service-envio-grupal-sub-plan]].
+> **Estado:** ✅ Implementada en local.
+> - **Slice 7:** verificado el 2026-11-05 (REST y gRPC, idempotencia en Valkey, reintentos con colas quorum, panel `/envios`), documentado y con su bitácora cerrada. Faltan el deploy a staging con el stack `servicios` y la fase de dudas ([[email-service-envio-individual-sub-plan]]).
+> - **Slice 8:** envío a grupos y lotes, con avance en vivo por SSE. Implementado y verificado en local el 2026-11-09; falta su deploy a staging ([[email-service-envio-grupal-sub-plan]]).
+> - **Siguiente versión:** consumo concurrente y reparto entre lotes, midiendo antes la capacidad del servicio y la de Stalwart (el futuro SMTP).
 
 # FASE 4 — Seguimiento y producción (Slice 9 y endurecimiento)
 
-> **Objetivo:** apertura, bajas y consulta interna de mensajes; y dejar el servicio listo para producción (OpenBao por https y rotación del `secret_id`, AppRole restringido por IP, `ForwardedHeaders`, `ASTRO_KEY` y `allowedDomains` del panel, rotación de la admin key).
+> **Objetivo:** apertura, bajas y consulta interna de mensajes; **migraciones automáticas con EF Core** en lugar de los `ALTER` a mano; y dejar el servicio listo para producción (OpenBao por https y rotación del `secret_id`, AppRole restringido por IP, `ForwardedHeaders`, `ASTRO_KEY` y `allowedDomains` del panel, rotación de la admin key).
 > **Estado:** ⏳ Pendiente — [[email-service-seguimiento-bajas-sub-plan]].
 
 # Dependencias y Orden de Ejecución
@@ -386,3 +424,4 @@ El Slice 7 necesita las plantillas (3) y el 8 necesita además los grupos (6). E
 
 - [[AGENTS]]
 - [[backend-manual]]
+- [[email-service-datos-maestros-testing]] (documentación para QA de la Fase 2)

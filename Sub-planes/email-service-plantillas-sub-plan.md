@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: Slice 3 — Plantillas
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-10-29
+actualizado: 2026-11-03
 estado: en-progreso
 proyecto: email-service
 padre: "[[email-service-plan]]"
@@ -38,6 +38,7 @@ tags:
 | `TemplatePermissions` (`CanManage`, `RequireManage`, `RequireUseAsync`) en `Application/Permissions` | ✅ (aún nadie llama a `RequireUseAsync`: lo usan los slices de envío) |
 | Endpoints REST, GraphQL `templates`, contratos, builders, sanitizador y renderizador | ✅ verificados con curl |
 | Panel: `/plantillas`, `/plantillas/nueva`, `/plantillas/[id]` y modal de asignación | ✅ verificado en Chrome |
+| Panel: borrador automático en `localStorage` (guardado al perder el foco en cada campo y en el cuerpo; "Recuperar borrador" / "Descartar" en el editor y aviso con enlaces en la lista; se borra al guardar) | ✅ (2026-10-30, verificado en Chrome) |
 | Deploy a testing | ⏳ |
 
 ## Alcance

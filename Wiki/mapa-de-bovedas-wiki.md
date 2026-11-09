@@ -76,6 +76,7 @@ Obsidian Vault/
 │   ├── nummex-cloudflare-deploy-plan.md
 │   └── pase-directo-api-aspirantes-sub-plan.md
 ├── Testing/                     [testing]  (documentación de entrega para QA)
+│   └── email-service-datos-maestros-testing.md
 └── Wiki/                        [wiki]
     ├── mapa-de-bovedas-wiki.md
     ├── repositorio-imagenes.md

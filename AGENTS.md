@@ -100,7 +100,7 @@ Convenciones que aplican al trabajar sobre código fuente del equipo:
 - **Documentación por proyecto**: cada repo mantiene sus pendientes en Markdown dentro del repo, p. ej. `tareas-bakcned.md` (backend) y `tareas-fontend.md` (frontend) en `pase-directo/`. Esa lista es la fuente de verdad del sprint a corto plazo; Plane lo es de la planificación.
 - **Modelos de solución**: separar frontend y backend; versionar en git; los despliegues y flujos de subida se documentan como `manual` en la bóveda (`to-production-manual.md`, `backend-manual.md`).
 - **Nuevo proyecto**: crear su `<proyecto>-<tema>-plan.md` en `Planes/`, documentar manuales en `Manuales/`, y publicar su estado en `Proyectos/Proyecto.md`.
-- **Entrega a QA**: al cerrar una entrega que pasa a pruebas, crear o actualizar `Testing/<proyecto>-<tema>-testing.md` desde `plantillas/Template-Testing.md` y sincronizarla a `3. Operación/Testing/` en Nextcloud.
+- **Entrega a QA**: al cerrar una entrega que pasa a pruebas, crear o actualizar `Testing/<proyecto>-<tema>-testing.md` desde `plantillas/Template-Testing.md` y sincronizarla a `3. Operación/Testing/` en Nextcloud. **Cada versión nueva** que llega a testing actualiza esa nota (endpoints nuevos o cambiados, reglas, versión y fecha en `Nota de pruebas`, `actualizado` en el frontmatter) y vuelve a sincronizarla; la nota siempre describe la versión desplegada.
 - **Estándares de código**: preferir documentar decisiones en las secciones `Decisiones de Diseño` / `Arquitectura y Notas Técnicas` del plan, no en comentarios dispersos.
 
 ## 8. Archivos AGENTS en cascada
