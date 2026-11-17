@@ -31,3 +31,7 @@ Se esta trabajando en la base de negocio productiva
 ## Email service
 
 Servicio de envío de correos (API .NET + panel Astro). Ya están listos la infraestructura, la autenticación por API key con roles, la gestión de consumidores y keys, la validación y la mensajería base; el envío real, plantillas, contactos y grupos se avanzan por vertical slices. Plan: [[email-service-plan]].
+
+## Asistencias Tecnológico Superior de Jalisco
+
+App de checadas del personal (web, luego móvil; backend C#). Una checada es válida si el GPS está dentro del centro de trabajo y la foto tomada con la cámara del dispositivo pasa el reconocimiento facial. Se despliega en Dokploy con imágenes en Harbor y secretos en OpenBao. Equipo: Efraín García (desarrollo), Gabriel Cisneros (líder de equipo), Ana Espinoza (Scrum Master). Fase 1 (fundamentos) en progreso. Plan: [[asistencias-plan]].

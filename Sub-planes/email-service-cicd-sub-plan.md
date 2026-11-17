@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: CI/CD — Gitea Actions, Harbor y Dokploy
 autor: Efraín García
 creado: 2026-11-03
-actualizado: 2026-11-09
+actualizado: 2026-11-10
 estado: en-progreso
 proyecto: email-service
 padre: "[[email-service-plan]]"
@@ -20,6 +20,9 @@ tags:
 
 > **Plan padre:** [[email-service-plan]]
 > Que CI corra en cada push y que la entrega a testing sea un `git push` a `staging`: imagen en Harbor, fila del historial y redeploy en Dokploy automáticos. Los secretos de la app siguen en OpenBao y los `ALTER` siguen siendo manuales.
+
+> [!note] Flujo vigente desde el 2026-11-10
+> Las decisiones 1 (mapa de ramas) y 5 (historial escrito por el bot) quedan reemplazadas: las ramas de trabajo salen de `QA`, testing se publica en el push a `QA`, `staging` solo crea la candidata `vX.Y.Z` y producción sale del push a `main`; la versión la registra una persona con `make commit-*` (envuelve `infra/utils/push.sh`) y el bot del CI ya no hace commits (solo tags y Releases); la candidata `X.Y.Z` registrada en `QA` deja `deploy-testing` en verde sin publicar. Desde la reorganización de la raíz (2026-11-10), los composes viven en `infra/perfiles/` (testing: `compose.testing.yml`, antes `compose.staging.yml`; producción: `compose.prod.yml`) y los scripts en `infra/utils/`. Ver [[flujo-ci-cd-manual]] y [[versionado-semver-manual]].
 
 ## Pendientes
 
@@ -58,3 +61,5 @@ Cubre CI en Gitea y la entrega a testing (API y panel). No cubre producción (et
 
 - [[email-service-plan]]
 - [[email-service-grupos-sub-plan]]
+- [[flujo-ci-cd-manual]]
+- [[versionado-semver-manual]]
