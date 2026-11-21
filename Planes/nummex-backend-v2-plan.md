@@ -3,7 +3,7 @@ tipo: plan
 titulo: "Nummex Backend v2 — Plan de Implementación"
 autor: "Efraín García"
 creado: 2026-10-27
-actualizado: 2026-10-28
+actualizado: 2026-11-02
 estado: en-progreso
 proyecto: nummex
 tags:
@@ -44,8 +44,8 @@ tags:
 | Capa | Contenido |
 |------|-----------|
 | `Core/` | Entidades (scaffold del esquema, en `Core/Entities`), enums de dominio, reglas puras (valuación, amortización, mora), jerarquía de excepciones con su nivel de log |
-| `Application/` | Servicios (`IXService`), lecturas (`IXQueries`), puertos (`IXRepository`, `IDataTransaction`, `IOdooSyncQueue`, `ILibroAzulClient`, `IFileStorage`, `IChatAgentClient`), contratos (request/response) y builders |
-| `Infrastructure/` | `NummexDbContext`, repositorios, `DataTransaction`, cola y worker de Odoo, clientes de Odoo / Libro Azul / Cloudinary / agente |
+| `Application/` | Servicios (`IXService`), lecturas (`IXQueries`), puertos (`IXRepository`, `IDataTransaction`, `IOdooQueue`, `IOdooUploader`, `ILibroAzulClient`, `IFileStorage`, `IChatAgentClient`), contratos (request/response) y builders |
+| `Infrastructure/` | `NummexDbContext`, repositorios, `DataTransaction`, cola y worker de Odoo, uploaders de Odoo (legacy y JSON-2), clientes de Libro Azul / MinIO / agente |
 | `Api/` | Controllers REST, validación de entrada y módulos de cada dominio (DI y rutas) |
 | `Platform/` | Módulos (`IModule`, `ModuleRegister`), errores, opciones, JWT, rate limiting y validaciones |
 
@@ -93,7 +93,7 @@ Todo punto de entrada (controller, worker) es un **adaptador**: solo traduce y d
 - Jerarquía `DomainException → AuthException / RequestException / InfrastructureException → In*`.
 - **El nivel de log es una propiedad de la clase base:** `RequestException` → Information, `AuthException` → Warning, `InfrastructureException` → Error.
 - Por debajo de 500 se muestra el mensaje; desde 500, un detalle genérico. La excepción completa se registra solo desde Error.
-- Fallas de Odoo, Libro Azul, Cloudinary o el agente → `InExternalServiceException` (502).
+- Fallas de Odoo, Libro Azul, MinIO o el agente → `InExternalServiceException` (502).
 - Los mensajes de las excepciones van en español, sin envoltorio en inglés. Los títulos del `ProblemDetails` salen en inglés (frases estándar de HTTP); el `detail` va en español.
 
 ## 7. Validación
@@ -150,7 +150,7 @@ Extraídas de `initial.sql` (esquema) y de `nummex-backend` v1 (comportamiento y
 - `contact_details` (uno por contacto): domicilio, código postal, RFC, CURP, ingreso y gasto mensual; los montos no pueden ser negativos.
 - `contact_documents` (uno por contacto): identificación, comprobante de domicilio y de ingresos (solo URLs).
 - `contact_quotes` (varias): monto ofrecido y solicitado ≥ 0, plazo en meses > 0.
-- `contact_references` (varias): **la lista no puede ir vacía** (regla de v1); el parentesco es un enum cerrado: `PARENT, SIBLING, FRIEND, PARTNER, CHILD, GRANDPARENT, UNCLE_AUNT, COUSIN, COWORKER`. En v1 era texto libre: el contrato cambia.
+- `contact_references` (varias): **la lista no puede ir vacía** (regla de v1); el parentesco es un enum cerrado: `PARENT, SIBLING, FRIEND, PARTNER, CHILD, GRANDPARENT, UNCLE_AUNT, COUSIN, COWORKER`. En v1 era texto libre y v1 tampoco validaba montos, año ni kilometraje en los pasos: el contrato cambia.
 - `contact_vehicles` (varios): marca, modelo y año obligatorios, año > 0, kilometraje ≥ 0; `vehicle_documents` guarda factura, tarjeta de circulación, tenencia, libre de gravamen y póliza.
 
 ## Cotización (Libro Azul)
@@ -164,9 +164,10 @@ Extraídas de `initial.sql` (esquema) y de `nummex-backend` v1 (comportamiento y
 
 ## Documentos
 
-- Subida por `multipart/form-data`, **máximo 10 MB**; devuelve la URL (la guarda después `contact_documents` o `vehicle_documents`).
-- `prospectId` y `phone` van **juntos o ninguno**: con ambos, el archivo va a la carpeta del prospecto; sin ellos, a la carpeta general.
-- Endpoint público con rate limiting de **30 solicitudes por minuto por IP**, sin cola.
+- Los archivos se guardan en **MinIO** (no en Cloudinary: v1 en realidad los subía a Odoo y Cloudinary era código muerto). Subida por `multipart/form-data`, **máximo 10 MB**, solo con la cookie de sesión del prospecto y sobre su propio contacto (v1 la dejaba pública).
+- Una sola llamada indica el `kind` del documento (identificación, comprobantes, factura, tarjeta de circulación, tenencia, libre de gravamen, póliza) y, para los del vehículo, el `vehicleId`; la API sube el archivo, guarda la **clave del objeto** en la columna de `contact_documents` o `vehicle_documents` y registra el archivo en `file_uploads`.
+- Extensiones de imagen y PDF (sin SVG) con validación de la firma real del archivo.
+- La cola copia cada archivo a Odoo como `ir.attachment` binario ligado al lead (Odoo lo guarda en su filestore de disco) cuando el lead ya existe. Detalle en [[nummex-backend-v2-fase-2-sub-plan]].
 
 ## Sincronización con Odoo
 
@@ -182,6 +183,8 @@ Extraídas de `initial.sql` (esquema) y de `nummex-backend` v1 (comportamiento y
 - Una cita pertenece a un contacto (prospecto o cliente) y a una zona opcional (si se borra la zona queda `NULL`).
 - `end_time > start_time`; `duration` la calcula Postgres. `confirmation` empieza en falso.
 - Una zona puede traer latitud (−90…90) y longitud (−180…180) o ninguna.
+- Las zonas se cargan desde `appsettings` (se insertan las que falten) y el frontend las lista.
+- Disponibilidad configurable: lunes a viernes de 09:00 a 17:00, citas de 30 minutos, de mañana a 30 días, **una cita por zona y horario** (409 si está ocupado). v1 no tenía citas ni zonas: son reglas nuevas.
 
 ## Clientes
 
@@ -277,7 +280,7 @@ sequenceDiagram
     participant API as API v2
     participant DB as PostgreSQL
     participant Q as Channel~T~
-    participant W as OdooSyncWorker
+    participant W as OdooUploadWorker
     participant O as Odoo
     U->>API: POST contacto
     API->>DB: guarda contacto (odoo_state = PENDING) + prospecto
@@ -340,7 +343,7 @@ flowchart LR
     V2 --> PG
     V2 -->|cola + worker| OD["Odoo"]
     V2 --> LA["Libro Azul"]
-    V2 --> CL["Cloudinary"]
+    V2 --> CL["MinIO"]
     V2 -->|interno| AG["nummex-agent"]
     AG --> QD[("Qdrant")]
 ```
@@ -370,12 +373,12 @@ flowchart LR
 |----------|-----|-------|
 | Odoo | Partners, leads y citas | Cola + worker; credenciales por variables de entorno |
 | Libro Azul | Catálogos y precio | Token 90 min, caché 6 h / 5 min, timeout 10 s |
-| Cloudinary | Documentos del prospecto | Carpeta por prospecto; URL se guarda en base |
+| MinIO | Documentos del prospecto | Carpeta por prospecto; se guarda la clave del objeto y la cola copia el archivo a Odoo |
 | `nummex-agent` | Chat con RAG | Servicio interno; sin puertos al host |
 
 ## Variables de entorno (solo nombres)
 
-Cadena de conexión de Postgres · emisor, audiencia, clave y vigencia del JWT · URL y credenciales de Odoo · URL y credenciales de Libro Azul · credenciales y carpeta de Cloudinary · URL del agente · orígenes permitidos de CORS · límites del rate limiting. Se agregan a `.env.example` cuando cada slice las introduzca.
+Cadena de conexión de Postgres · emisor, audiencia, clave y vigencia del JWT · URL y credenciales de Odoo · URL y credenciales de Libro Azul · endpoint, bucket y credenciales de MinIO (`Storage__*`) · `Odoo__Api` (`Legacy` | `Json2`) · URL del agente · orígenes permitidos de CORS · límites del rate limiting. Se agregan a `.env.example` cuando cada slice las introduzca.
 
 ## Operación
 
@@ -389,17 +392,22 @@ Cadena de conexión de Postgres · emisor, audiencia, clave y vigencia del JWT �
 
 # Pendientes
 
+- [ ] **Antes de cerrar la Fase 2:** cambiar la recuperación de sesión del prospecto (`POST /api/prospects/session/recover`, hoy correo + fecha de nacimiento, un factor débil) por **verificación por correo electrónico** (código o enlace de un solo uso). Con el `GET /api/prospects/{id}/application` (lectura de la solicitud por la cookie del dueño) quien conozca ambos datos podría leer RFC, CURP, domicilio, ingresos y referencias, además de modificar la solicitud. Por ahora `recover` se queda como está (decisión del responsable). Ver [[nummex-backend-v2-fase-2-sub-plan]].
+- [ ] **Antes de cerrar la Fase 2:** **verificación del correo del usuario por SMTP** con código de un solo uso con formato `NUM-XXX-XXX` (expiración corta, límite de intentos y reenvío; campo `email_verified_at` en `users`/`contacts`; envío por SMTP, proveedor por definir). Se pide al crear la contraseña al final del funnel y sustituye también el factor débil de `recover`. Decisión del responsable: primero se termina el frontend (contraseña al final del funnel y acceso en `/acceso`); esta verificación queda pendiente.
 - [ ] Fórmula de amortización (hoy 2.9 % mensual / 1.45 % quincenal en el frontend) y cálculo de la mora: base, capitalización y redondeo.
 - [ ] Orden de aplicación de un pago: cuota más antigua primero; dentro de la cuota, ¿cargos → interés → capital?
 - [ ] Umbral de `DUE_SOON` (¿cuántos días?) y quién recalcula estados: ¿un job diario o al consultar?
 - [ ] Transiciones permitidas de `clients.status` y quién las dispara.
-- [ ] Significado de cada fase de `prospects.funnel` y su relación con las etapas de Odoo.
+- [ ] Confirmar el mapeo del funnel por tablas (`FunnelStages`: `contacts`=1 … `users`=9) y su relación con las etapas de Odoo; el comprobador lo calcula, la Fase 2 lo llama tras cada paso.
+- [ ] Regla de composición de contraseña (hoy solo largo 8 a 20), alta de personal y permiso `ADMIN` con su interfaz, y la consulta interna y el reencolado de la cola de Odoo.
+- [ ] El refresh vive en memoria: un reinicio de la API cierra las sesiones; revisar si hace falta persistirlo. El `Path` de las cookies (`/api`, `/api/auth`) está fijo aunque `App:Path` sea configurable.
+- [ ] Variables `Jwt__*` en el compose de v2 cuando exista; rotar `Jwt__Key`; el worker de Odoo repite el aviso de "no configurado" en cada barrido (avisar una sola vez).
 - [x] Límite de intentos al recuperar sesión: `StrictWindow`, 5 por 900 s por IP (Slice 2). Un límite por correo queda fuera de alcance.
 - [x] Persistencia de la cola: sin tabla; el respaldo durable es `contacts.odoo_state` (decisión 6, confirmada por el responsable).
-- [ ] Confirmar con el Odoo real los parámetros de JSON-2 (`vals_list`, `vals`, `domain`, `fields`, `limit`) y obtener una key de JSON-2 y el nombre de la base para el worker (la key del MCP no sirve en `/json/2`).
+- [ ] (Cuando se migre a JSON-2) Confirmar con el Odoo real los parámetros de JSON-2 (`vals_list`, `vals`, `domain`, `fields`, `limit`) y obtener una key de JSON-2 y el nombre de la base para el worker (la key del MCP no sirve en `/json/2`).
 - [ ] Búsqueda de partner solo por correo: decidir si se filtra además por nombre o `company_type` si en Odoo hay correos repetidos.
 - [ ] Validar al arrancar `Odoo:TimeoutSeconds` y una `Odoo:BaseUrl` mal formada (hoy fallan en el primer uso).
-- [ ] Consulta interna de contactos `PENDING`/`FAILED` y forma de reencolar un `FAILED` (Slice 4).
+- [ ] Consulta interna de contactos `PENDING`/`FAILED` y forma de reencolar un `FAILED` (fuera del Slice 4: falta la interfaz del personal).
 - [ ] Rotar la key de Odoo expuesta en el chat y usar una de permisos mínimos para el worker (las keys caducan como máximo a los 3 meses).
 - [ ] Migración de datos de v1 (prospectos con id entero) al esquema nuevo (contactos con UUID).
 - [ ] Definir si habrá proyecto de tests y quién los escribe.
@@ -408,7 +416,7 @@ Cadena de conexión de Postgres · emisor, audiencia, clave y vigencia del JWT �
 - [ ] Las claves de `errors` del 400 salen en PascalCase (`Name`, `Phone`...); ajustar si el frontend las espera en camelCase.
 - [ ] Teléfono (10 a 15 dígitos) y edad mínima (hoy solo "anterior a hoy y no mayor de 120 años"): confirmar reglas.
 - [ ] Los 409 del alta revelan si un correo o teléfono existe (como v1); mitigado con el límite `Strict`.
-- [ ] Poblar las capas de `nummex-backend-v2` por slices (hecho: fundaciones y prospectos; faltan Odoo, usuarios y los dominios de las fases 2 y 3).
+- [ ] Poblar las capas de `nummex-backend-v2` por slices (hecho: fundaciones, prospectos, Odoo y usuarios; faltan los dominios de las fases 2 y 3).
 
 # Estado Actual (resumen ejecutivo)
 
@@ -423,14 +431,14 @@ Cadena de conexión de Postgres · emisor, audiencia, clave y vigencia del JWT �
 | Rate limiting (Relaxed, Moderate, Strict, StrictWindow), CORS y validación nativa | ✅ |
 | Contactos, prospectos y sesión por cookie (`AuthModule`, `ProspectSession`) | ✅ verificado con curl contra Postgres |
 | Cola y worker de Odoo | ✅ (verificado con Odoo simulado; parámetros JSON-2 por confirmar con el Odoo real) |
-| Usuarios y JWT | ⏳ |
+| Usuarios y JWT | ✅ (verificado con curl contra Postgres) |
 | Cotización Libro Azul, documentos, citas | ⏳ |
 | Clientes, préstamos, cuotas, pagos y cobranza | ⏳ |
 | Chat con el agente | ⏳ |
 
 | Fase | Slices | Estado |
 |------|--------|--------|
-| 1 — Fundaciones, contactos, cola Odoo y JWT — [[nummex-backend-v2-fase-1-sub-plan]] | 1 a 4 | 🔄 en progreso (slices 1 a 3 listos; falta el 4) |
+| 1 — Fundaciones, contactos, cola Odoo y JWT — [[nummex-backend-v2-fase-1-sub-plan]] | 1 a 4 | ✅ Slices 1 a 4 listos y verificados |
 | 2 — Funnel completo (paridad con v1) | 5 a 8 | ⏳ Pendiente |
 | 3 — Crédito: préstamos, pagos y cobranza | 9 a 11 | ⏳ Pendiente |
 | 4 — Chat, endurecimiento y corte | 12 | ⏳ Pendiente |
@@ -440,17 +448,17 @@ Cadena de conexión de Postgres · emisor, audiencia, clave y vigencia del JWT �
 | 1 | Fundaciones: errores, `DbContext`, `IDataTransaction`, rate limiting, opciones | ✅ |
 | 2 | Contactos y prospectos (funnel, `session_token`, recuperación) | ✅ |
 | 3 | Cola de sincronización con Odoo (`Channel<T>` + worker) | ✅ |
-| 4 | Usuarios y JWT | ⏳ |
+| 4 | Usuarios y JWT | ✅ |
 | 5 | Catálogo y cotización Libro Azul | ⏳ |
 | 6 | Datos de solicitud (detalle, referencias, vehículos, cotizaciones) | ⏳ |
-| 7 | Documentos (Cloudinary) | ⏳ |
+| 7 | Documentos (MinIO) | ⏳ |
 | 8 | Zonas y citas | ⏳ |
 | 9 | Clientes, contratos, préstamos, garantías y amortización | ⏳ |
 | 10 | Cuotas y pagos (aplicación) | ⏳ |
 | 11 | Cobranza | ⏳ |
 | 12 | Chat con el agente | ⏳ |
 
-Sub-plan de la Fase 1 (slices 1 a 4): [[nummex-backend-v2-fase-1-sub-plan]]. Los de las demás fases se crean en `Sub-planes/` (`nummex-backend-v2-<tema>-sub-plan.md`) cuando arranquen.
+Sub-plan de la Fase 1 (slices 1 a 4): [[nummex-backend-v2-fase-1-sub-plan]]. Sub-plan de la Fase 2 (paso 0 y slices 5 a 8): [[nummex-backend-v2-fase-2-sub-plan]]. Los de las demás fases se crean en `Sub-planes/` (`nummex-backend-v2-<tema>-sub-plan.md`) cuando arranquen.
 
 # Decisiones de Diseño (vigentes)
 
@@ -472,12 +480,19 @@ Sub-plan de la Fase 1 (slices 1 a 4): [[nummex-backend-v2-fase-1-sub-plan]]. Los
 16. **El `funnel` no tiene endpoint propio:** lo suben los slices de la Fase 2 y el Slice 4 marca `completed_at`.
 17. **Rate limiting:** Relaxed, Moderate y Strict por token bucket (Moderate como límite global) más `StrictWindow` de ventana fija por IP para login y recuperación de sesión.
 18. **Del proyecto de ejemplo solo se porta lo que v2 usa** (sin GraphQL, email, RabbitMQ ni OpenBao).
-19. **Odoo 20 se consume por JSON-2** (no JSON-RPC como v1), a través de una **abstracción HTTP compartida** con Libro Azul (`IExternalApiClient`, clase base con reintentos y estrategia de autenticación por servicio).
-20. **Sincronización idempotente:** se busca antes de crear y cada id se guarda al obtenerlo; así un guardado fallido no duplica registros en Odoo.
+19. **Odoo se consume por JSON-RPC (legacy) ahora y por JSON-2 después:** dos uploaders que heredan de `IOdooUploader` (`LegacyOdooUploader` y `Json2OdooUploader`), elegidos con `Odoo__Api`; al migrar solo cambia la implementación. La **abstracción HTTP compartida** con Libro Azul (`IExternalApiClient`, clase base con reintentos y estrategia de autenticación por servicio) ya existe; el uploader legacy lleva las credenciales en el cuerpo del RPC.
+20. **Sincronización idempotente:** se busca antes de crear y cada id se guarda al obtenerlo; así un guardado fallido no duplica registros en Odoo. El estado en la base es de comprobación administrativa y se agrega a cada tabla sincronizada.
+21. **Refresh token solo en cookie HttpOnly** (`nummex.refresh`, `Path=/api/auth`), en `IMemoryCache` con rotación y revocación; access JWT de 1 hora en el cuerpo; contraseña de 8 a 20 caracteres.
+22. **`funnel` calculado por tablas:** `FunnelStages` asigna un número a cada tabla del dominio y `IFunnelStatusChecker` devuelve la etapa más alta con datos del contacto; el registro de contraseña lo fija con mínimo en la etapa de `users`.
+23. **Login sin enumeración:** mismo 401 para correo inexistente, contraseña incorrecta y usuario inactivo, y tiempos comparables (hash ficticio calculado una vez).
+24. **Cola de Odoo con roles separados:** el worker (`OdooUploadWorker`) solo sabe reintentos y a dónde va cada mensaje tipado (Contacto, Archivo…); el uploader trata la subida y transforma el modelo local al de Odoo. Ver [[nummex-backend-v2-fase-2-sub-plan]].
+25. **Archivos en MinIO** (no Cloudinary), copiados a Odoo como `ir.attachment` binario por la cola; el estado vive en `file_uploads`, tabla nueva sincronizada por archivo.
+26. **Pasos del funnel solo con la cookie de sesión** (`POST`); leer esos datos queda para cuando sea cliente (Fase 3). La sincronización con Odoo de vehículo, cotización, datos, etapas y citas queda pendiente hasta tener los datos de flotilla.
+27. **Zonas desde `appsettings` y citas con disponibilidad** (L–V 09:00–17:00, 30 minutos, una por zona y horario).
 
 # Arquitectura y Notas Técnicas
 
-- **Stack:** .NET 10 (minimal API / controllers), EF Core + Npgsql, JWT bearer, `BackgroundService` + `Channel<T>`, Cloudinary, Libro Azul, Odoo (JSON-RPC), Docker Compose y Caddy.
+- **Stack:** .NET 10 (minimal API / controllers), EF Core + Npgsql, JWT bearer, `BackgroundService` + `Channel<T>`, MinIO, Libro Azul, Odoo (JSON-RPC legacy ahora, JSON-2 después), Docker Compose y Caddy.
 - **Pipeline HTTP:** manejo de errores (100) → CORS (150) → rate limiting (200) → autenticación y autorización (300) → validación nativa → endpoint (`PipelineOrder`).
 - **Módulos:** cada funcionalidad es un `IModule` que implementa solo lo que necesita: `IServiceInstaller` (DI), `IEndpointMapper` (rutas) e `IPipelineStep` (pipeline, con `Order`). `Program.cs` no registra servicios a mano.
 - **Colas:** `IOdooSyncQueue` (puerto) con `Channel<Guid>` acotado; `OdooSyncWorker` como `BackgroundService`; `contacts.odoo_state` como estado durable (sin tabla de trabajos). **HTTP externo:** `IExternalApiClient` compartido (Odoo y Libro Azul).
@@ -521,22 +536,25 @@ Sub-plan de la Fase 1 (slices 1 a 4): [[nummex-backend-v2-fase-1-sub-plan]]. Los
 # FASE 1 — Fundaciones, contactos, cola de Odoo y JWT (Slices 1 a 4)
 
 > **Objetivo:** base técnica (errores, datos, rate limiting), alta de contactos y prospectos con sesión, sincronización asíncrona con Odoo y autenticación con JWT.
-> **Estado:** 🔄 En progreso (slices 1 a 3 ✅; falta el 4) — [[nummex-backend-v2-fase-1-sub-plan]].
+> **Estado:** ✅ Completa (slices 1 a 4) — [[nummex-backend-v2-fase-1-sub-plan]].
 
 - **Slice 1 — Fundaciones ✅:** jerarquía de excepciones y `ProblemDetails`, scaffold de las 20 entidades y `NummexDbContext`, `IDataTransaction`, rate limiting (con `StrictWindow`), CORS y validación.
 - **Slice 2 — Contactos y prospectos ✅:** alta (409 por correo o teléfono repetido), `session_token` por cookie y recuperación con correo y fecha de nacimiento; `AuthModule` con el esquema `ProspectSession`. El avance del `funnel` queda para la Fase 2.
 - **Slice 3 — Cola de Odoo ✅:** estado de la sincronización en `contacts` (`odoo_state`, `odoo_created_at`) y ids de Odoo nulos, abstracción HTTP compartida, cliente de Odoo por JSON-2, cola en memoria, procesador idempotente y `OdooSyncWorker` con reintentos, rehidratación y `FAILED`. Sin tabla de trabajos.
-- **Slice 4 — Usuarios y JWT:** registro de contraseña al completar el funnel, login, refresh, permisos `READ`/`EDIT` y `last_session`.
+- **Slice 4 — Usuarios y JWT ✅:** registro de contraseña (`POST /api/auth/register`, con `completed_at` y `funnel` calculado por tablas), login con 401 uniforme, refresh con rotación en cookie `nummex.refresh` (en `IMemoryCache`), logout, `GET /api/auth/me`, permisos `READ`/`EDIT` por política y `last_session`. Sin interfaz del personal.
 
 # FASE 2 — Funnel completo, paridad con v1 (Slices 5 a 8)
 
-> **Objetivo:** reemplazar todo lo que hoy hace v1 sobre el esquema nuevo.
-> **Estado:** ⏳ Pendiente.
+> **Objetivo:** reemplazar todo lo que hoy hace v1 en el funnel sobre el esquema nuevo, más zonas y citas con disponibilidad.
+> **Estado:** 🔄 Planificada — [[nummex-backend-v2-fase-2-sub-plan]].
 
-- **Slice 5 — Cotización Libro Azul:** catálogo en cascada, valuación al 70 %, caché y política de errores.
-- **Slice 6 — Datos de solicitud:** detalle, referencias (enum), vehículos y cotizaciones guardadas, con sus etapas hacia Odoo.
-- **Slice 7 — Documentos:** subida a Cloudinary (≤ 10 MB, carpeta por prospecto) y guardado de URLs de contacto y vehículo.
-- **Slice 8 — Zonas y citas:** zonas, citas con horario válido y sincronización con Odoo por la cola.
+- **Paso 0 — Cola de Odoo con uploaders:** mensajes tipados, `OdooUploadWorker` (reintentos y despacho) e `IOdooUploader` con dos implementaciones (legacy ahora, JSON-2 después).
+- **Slice 5 — Cotización Libro Azul:** catálogo en cascada, valuación al 70 %, caché y política de errores; la autenticación por query amplía la abstracción HTTP.
+- **Slice 6 — Datos de solicitud:** vehículo, cotización, datos personales y referencias (enum), solo `POST` con la cookie del prospecto; sin sincronización con Odoo todavía.
+- **Slice 7 — Documentos:** subida a MinIO (≤ 10 MB) con tabla `file_uploads` y copia a Odoo por la cola como adjunto binario.
+- **Slice 8 — Zonas y citas:** zonas desde `appsettings` y citas con disponibilidad (una por zona y horario).
+- **Requisito antes de cerrar la Fase 2:** reemplazar `recover` (correo + fecha de nacimiento) por verificación por correo electrónico; mientras tanto la recuperación de sesión sigue igual.
+- **Requisito antes de cerrar la Fase 2:** validar el correo por SMTP con código `NUM-XXX-XXX` (ver Pendientes).
 
 # FASE 3 — Crédito (Slices 9 a 11)
 

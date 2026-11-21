@@ -3,7 +3,7 @@ tipo: sub-plan
 titulo: "Fase 1 — Fundaciones, contactos, cola de Odoo y JWT"
 autor: "Efraín García"
 creado: 2026-10-27
-actualizado: 2026-10-28
+actualizado: 2026-10-29
 estado: en-progreso
 proyecto: nummex
 padre: "[[nummex-backend-v2-plan]]"
@@ -25,9 +25,9 @@ tags:
 ## Pendientes
 
 - [x] Valores de rate limiting fijados: Relaxed 300 por 60 s, Moderate 60 por 60 s, Strict 5 con reposición de 1 cada 12 s y StrictWindow 5 por 900 s por IP (en `appsettings.json`; se pueden ajustar sin tocar código).
-- [ ] Vigencia del access token y del refresh token.
-- [ ] Política mínima de contraseña.
-- [ ] Definir si `POST /auth/register` solo sirve para prospectos con sesión o también crea usuarios de backoffice.
+- [x] Vigencia del access token (1 hora) y del refresh token (7 días, cookie HttpOnly).
+- [x] Política mínima de contraseña: 8 a 20 caracteres, sin regla de composición (pendiente revisar).
+- [x] `POST /auth/register` solo sirve para prospectos con sesión; el personal queda fuera hasta tener su interfaz.
 - [ ] Transiciones y significado de cada valor de `prospects.funnel`.
 - [ ] Límite por email (además de por IP) en la recuperación de sesión: exige leer el cuerpo antes de limitar; queda fuera de esta fase.
 - [ ] Aceptado: los refresh tokens viven en `IMemoryCache`; un reinicio de la API obliga a iniciar sesión otra vez y solo sirve con una instancia. Si v2 escala, pasan a caché distribuida o a tabla.
@@ -59,7 +59,8 @@ tags:
 | **Slice 3** — `contacts.odoo_state`/`odoo_created_at`, `prospects.id_odoo_lead`, `dates.id_odoo_date` nulo en `initial.sql` | ✅ |
 | **Slice 3** — abstracción HTTP compartida (`IExternalApiClient`, clase base, estrategia de autenticación) | ✅ |
 | **Slice 3** — cliente de Odoo (JSON-2), cola en memoria (`Channel<Guid>`), procesador idempotente y `OdooSyncWorker` | ✅ (verificado con Odoo simulado; parámetros JSON-2 por confirmar con el Odoo real) |
-| **Slice 4** — usuarios, JWT, refresh, políticas por permiso | ⏳ |
+| **Slice 4** — usuarios, registro de contraseña, login, refresh con rotación, `me` y políticas `Read`/`Edit` | ✅ (verificado con curl contra Postgres) |
+| **Slice 4** — `FunnelStages` e `IFunnelStatusChecker` (etapa del funnel por tablas con datos) | ✅ |
 
 ## Alcance
 
@@ -78,7 +79,7 @@ Decisiones propias de esta fase:
 - La contraseña se hashea con `PasswordHasher<T>` de ASP.NET (PBKDF2), sin paquetes extra.
 - El rate limiting es el de EmailSendService (Relaxed, Moderate y Strict por token bucket, con Moderate como límite global) más una variante **sin bucket**, `StrictWindow`, de ventana fija por IP. Sustituye el "30 solicitudes por minuto por IP" de v1.
 - Los trabajos de Odoo corren con `Channel<Guid>` + `BackgroundService` **sin tabla de trabajos**: el estado durable está en `contacts.odoo_state` (`PENDING | SYNCED | FAILED`) y `odoo_created_at`, y el worker rehidrata los `PENDING` al arrancar y con un barrido periódico.
-- **Odoo 20 se consume por JSON-2** (`/json/2/<modelo>/<método>`, bearer + `X-Odoo-Database`), a través de una abstracción HTTP compartida con Libro Azul (`IExternalApiClient`).
+- **Odoo 20 se consume por JSON-2** (`/json/2/<modelo>/<método>`, bearer + `X-Odoo-Database`), a través de una abstracción HTTP compartida con Libro Azul (`IExternalApiClient`). **Actualización (Fase 2):** se usará el JSON-RPC **legacy** por ahora y este cliente JSON-2 se conserva como segunda implementación (`Json2OdooUploader`); ver [[nummex-backend-v2-fase-2-sub-plan]], Paso 0.
 - **Idempotencia en Odoo:** antes de crear se busca (partner por correo; lead por partner, tipo y `opportunity`) y se reutiliza lo existente; cada id se guarda al obtenerlo.
 - Un contacto `FAILED` no se reintenta solo: se vuelve a poner `PENDING`.
 - **Sesión del prospecto (Slice 2):** esquema de autenticación propio `ProspectSession` (cookie `nummex.session` = `session_token`, 7 días). Vive en el mismo `AuthModule` que recibirá JWT en el Slice 4.
@@ -140,7 +141,7 @@ Ejecutado en los pasos 1.1 a 1.4 (CREAR), 2.1 (MODIFICAR) y 3.1 a 3.3 (ENLAZAR).
 - [x] `POST /api/prospects/session/recover` (`StrictWindow`): restaura la cookie con el mismo token; si no coincide, 404 genérico (no revela qué dato falló); no distingue mayúsculas en el correo.
 - [x] `GET /api/prospects/{contactId}` (política `Prospect`, `Moderate`): un prospecto solo ve su propio registro (otro id responde 403; sin cookie o con una desconocida, 401).
 - [x] Verificado con curl contra Postgres (16 puntos): alta 201 y cookie; 409 por correo y por teléfono; 400 con `errors`; 429 al sexto alta seguido y al sexto intento de recuperación; GET propio 200, ajeno 403, sin cookie 401; recuperación correcta e incorrecta; en base, 2 contactos y 2 prospectos sin filas huérfanas, `id_odoo_contact` nulo, correos en minúsculas y token de 16; cookie en Production con `secure` y `samesite=none`.
-- [ ] No hecho (por decisión): avance de `funnel` y `completed_at`; lo suben los slices de la Fase 2 y el Slice 4.
+- [x] `completed_at` y `funnel` los marca el registro de contraseña (Slice 4); el avance posterior del `funnel` lo calcula `IFunnelStatusChecker` y lo llaman los slices de la Fase 2.
 
 ### Slice 3 — Cola de Odoo ✅
 
@@ -162,34 +163,37 @@ Ejecutado en los pasos 1.1 a 1.3 (CREAR), 2.1 (MODIFICAR) y 3.1 a 3.2 (ENLAZAR),
 - [x] Procesador idempotente: busca antes de crear (`search_read`: partner por correo; lead por partner + tipo `Préstamo` + `opportunity`) y reutiliza lo que exista; guarda cada id en cuanto lo tiene, con hasta 3 intentos de guardado; si el guardado falla, relanza la excepción original.
 - [x] Verificado contra Postgres temporal y un Odoo simulado en puerto local: alta 201 en 0.015–0.8 s sin esperar a Odoo; `SYNCED` en ≤ 1 s; Odoo caído → reintentos a 2 s y 4 s y `FAILED` a los ~6.5 s; un `FAILED` no se rehidrata; un `PENDING` sí tras reiniciar; reutilización de partner y lead existentes sin crear duplicados; 401 con `FAILED` y sin la key en logs; sin Odoo configurado el alta sigue en 201 y queda `PENDING`; logs sin keys, contraseñas ni datos personales ni stack traces del `HttpClient`; contactos y prospectos 1 a 1.
 - [ ] Pendiente: los nombres de parámetros de JSON-2 (`vals_list`, `vals`, `ids`, `domain`, `fields`, `limit`) siguen sin confirmar contra el Odoo real; la key del MCP solo sirve para el MCP (401 en `/json/2`), el worker necesita una key de JSON-2 y el nombre de la base.
-- [ ] Pendiente: consulta interna de contactos `PENDING`/`FAILED` (`WHERE odoo_state <> 'SYNCED'`); se mapea en el Slice 4 con su permiso.
+- [ ] Pendiente: consulta interna de contactos `PENDING`/`FAILED` (`WHERE odoo_state <> 'SYNCED'`); queda fuera del Slice 4 hasta que exista la interfaz del personal (permiso `ADMIN`).
 
-### Slice 4 — Usuarios y JWT
+### Slice 4 — Usuarios y JWT ✅
 
-**Paso 1 — CREAR**
-- [ ] Puertos: `IUserRepository`, `IAuthService`, `ITokenService`, `IRefreshTokenStore` (implementado sobre `IMemoryCache`).
-- [ ] `JwtOptions` (emisor, audiencia, clave, vigencia del access y del refresh; solo nombres de variable en `.env.example`) con validación al arrancar.
-- [ ] Contratos: `RegisterRequest` (contraseña), `LoginRequest`, `TokenResponse`, `MeResponse`.
-- [ ] `AuthService`: hash con `PasswordHasher<T>`, verificación con 401 uniforme (credenciales inválidas, usuario inexistente o `is_active = false` responden igual), actualización de `last_session`.
-- [ ] Refresh opaco aleatorio: se guarda solo su hash en `IMemoryCache`, con rotación en cada uso (el anterior deja de valer) y revocación al cerrar sesión o desactivar al usuario.
+Ejecutado en los pasos 1.1 a 1.3 (CREAR), 2.1 (MODIFICAR) y 3.1 a 3.3 (ENLAZAR), con un ajuste posterior (`Location` del registro y tiempos del login).
 
-**Paso 2 — MODIFICAR**
-- [ ] `ProspectService`: marcar `completed_at` al registrar la contraseña y subir el `funnel` a su fase final.
-- [ ] La consulta interna de la cola de Odoo (Slice 3) pasa a exigir el permiso correspondiente.
+**Decisiones del slice:** el refresh va solo en la cookie `nummex.refresh` (HttpOnly, `Path=/api/auth`, 7 días); access token JWT HS256 de 1 hora en el cuerpo; contraseña de 8 a 20 caracteres (sin regla de composición); al registrar la contraseña el `funnel` lo calcula el comprobador por tablas (`FunnelStages` + `IFunnelStatusChecker`) con mínimo en la etapa de `users`; sin interfaz del personal, la consulta interna de la cola de Odoo queda fuera del slice.
 
-**Paso 3 — ENLAZAR**
-- [ ] `AuthModule` (`IServiceInstaller` + `IPipelineStep`, `PipelineOrder.Auth`): JWT bearer, claims con `permissions` (`READ`, `EDIT`) y políticas por permiso.
-- [ ] `POST /auth/register` (prospecto con sesión válida): crea el `user` con su hash y `completed_at`.
-- [ ] `POST /auth/login` (`StrictWindow`), `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`.
-- [ ] La contraseña nunca se registra ni se devuelve.
-- [ ] Verificar con curl: registro, login correcto, contraseña incorrecta, usuario inactivo (mismo 401), refresh con rotación (el token anterior ya no sirve), logout, ruta protegida sin token (401) y con permiso insuficiente (403), y el 429 en login.
+**Bloque 1 — CREAR (aditivo, sin registrar en DI)**
+- [x] `Core/Funnel/` (`FunnelStages`: 9 etapas por tabla, `contacts`=1 … `users`=9; `FunnelStage`) y `Application/Funnel/IFunnelStatusChecker`.
+- [x] `Application/Auth/`: `IUserRepository`, `IPasswordService` (con `VerifyAgainstDummy`), `ITokenService`, `IRefreshTokenStore`, `IAuthService`, `AuthPermissions` (`READ`, `EDIT`), `AuthService` (registro con un solo `CommitAsync`, login con 401 uniforme, refresh con rotación, logout, `me`) y los contratos `RegisterRequest`, `LoginRequest`, `TokenResponse`, `MeResponse`, `AuthResult`. `IProspectRepository.FindByContactIdAsync`.
+- [x] Paquete `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.14; `Platform/Auth/JwtOptions` con validación al arrancar (clave de ≥ 32 bytes).
+- [x] `Infrastructure/Security/`: `JwtTokenService` (claims `sub`, `contact_id`, `jti`, `permissions`), `MemoryRefreshTokenStore` (solo SHA-256 del token, consumo atómico, índice por usuario para revocar), `IdentityPasswordService` (PBKDF2 con `PasswordHasher<User>`); `Persistence/Repositories/UserRepository` y `Persistence/FunnelStatusChecker`.
+- [x] `Platform/Auth/RefreshCookie`, constantes `Bearer`, `Read` y `Edit` en `AuthSchemes`, y `Api/Auth/AuthEndpoints` (sin mapear hasta el ENLAZAR).
 
-## Estructura actual de `Src/` (al cerrar el Slice 3)
+**Bloque 2 — MODIFICAR**
+- [x] Sección `Jwt` en `appsettings.json` sin secretos; `Jwt__Issuer`, `Jwt__Audience` y `Jwt__Key` (solo nombres) en `.env.example`; `PersistenceModule` registra el repositorio de usuarios y el comprobador del funnel.
+
+**Bloque 3 — ENLAZAR**
+- [x] `AuthModule` (`IServiceInstaller` + `IPipelineStep`): esquema `Bearer` con `MapInboundClaims = false`, validación de emisor, audiencia, firma, caducidad y `ClockSkew`; políticas `Read` y `Edit` por claim de permiso; servicios de auth. Sin `Jwt__Issuer`, `Jwt__Audience` o `Jwt__Key` válidos la API **no arranca**.
+- [x] `AuthEndpointsModule`: `POST /api/auth/register` (política `Prospect`, `Strict`, 201 con `Location` a `/api/auth/me`), `POST /api/auth/login` (`StrictWindow`), `POST /api/auth/refresh`, `POST /api/auth/logout` y `GET /api/auth/me` (política `Read`).
+- [x] Verificado contra Postgres temporal: registro (401 sin cookie, 400 con 7 y 21 caracteres, 201, 409; `completed_at` y `funnel` = 9; hash PBKDF2), login (cookie de refresh HttpOnly en `/api/auth`, `last_session`, claims correctos), 401 uniforme para contraseña incorrecta, correo inexistente y usuario inactivo con el mismo cuerpo, refresh con rotación, logout con revocación en servidor, usuario desactivado (`me` y refresh dan 401), `me` con 401 (sin token, alterado, basura, vencido) y 403 (sin permiso), 429 en el login a la sexta petición, reinicio que invalida el refresh, cookie `secure; samesite=none` en Production, logs sin claves, contraseñas ni tokens, y consistencia de contactos, prospectos y usuarios.
+- [x] Corrección tras la verificación: el tiempo del login con correo inexistente era ~2x el de contraseña incorrecta (hash ficticio recalculado por petición); ahora se calcula una vez en el servicio singleton y la diferencia de medianas es ≈ 2 %. El `Location` pasó de `me` a la ruta absoluta `/api/auth/me` (`CreatedAtRoute`).
+- [ ] Pendiente: la consulta interna y el reencolado de la cola de Odoo (permiso `ADMIN` y la interfaz del personal).
+
+## Estructura actual de `Src/` (al cerrar el Slice 4)
 
 ```
 Src/
 ├── Api/
-│   ├── Auth/AuthModule.cs
+│   ├── Auth/ (AuthModule, AuthEndpoints, AuthEndpointsModule)
 │   ├── Cors/CorsModule.cs
 │   ├── External/ExternalApiModule.cs
 │   ├── Odoo/OdooModule.cs
@@ -202,21 +206,25 @@ Src/
 │   └── Validation/ValidationModule.cs
 ├── Application/
 │   ├── Builders/IResponseBuilder.cs
+│   ├── Auth/ (IAuthService, AuthService, IUserRepository, IPasswordService, ITokenService, IRefreshTokenStore, AuthPermissions, Contracts/)
+│   ├── Funnel/IFunnelStatusChecker.cs
 │   ├── External/ (IExternalApiClient, IExternalAuthStrategy, ExternalApiRequest, ExternalApiResponse, ExternalApiMethod)
 │   ├── Odoo/ (IOdooClient, IOdooSyncQueue, IOdooSyncRepository, IOdooSyncProcessor, OdooSyncContact, OdooLeadStage)
 │   ├── Common/IDataTransaction.cs
 │   ├── Contacts/IContactRepository.cs
 │   └── Prospects/ (servicio, queries, puertos, permisos, Contracts/, Builders/)
 ├── Core/
-│   ├── Entities/ (20 entidades por scaffold)
+│   ├── Entities/ (21 entidades; 20 por scaffold)
+│   ├── Funnel/ (FunnelStages, FunnelStage)
 │   ├── Exceptions/ (Auth, Requests, Configuration, ExternalServices)
 │   └── Security/SessionToken.cs
 ├── Infrastructure/
 │   ├── External/ (ExternalApiClientBase, HttpExternalApiClient, ExternalRequestFactory, ExternalResponseReader)
+│   ├── Security/ (JwtTokenService, MemoryRefreshTokenStore, IdentityPasswordService)
 │   ├── Odoo/ (OdooOptions, OdooAuthStrategy, OdooClient, OdooSyncQueue, OdooSyncProcessor, OdooSyncWorker)
-│   └── Persistence/ (NummexDbContext, DataTransaction, PersistenceModule, Repositories/ incl. OdooSyncRepository)
+│   └── Persistence/ (NummexDbContext, DataTransaction, PersistenceModule, Repositories/ incl. OdooSyncRepository y UserRepository, FunnelStatusChecker)
 └── Platform/
-    ├── Auth/ (AuthSchemes, AuthClaims, SessionCookie, ProspectSessionHandler)
+    ├── Auth/ (AuthSchemes, AuthClaims, SessionCookie, RefreshCookie, ProspectSessionHandler, JwtOptions)
     ├── Config/ConfigValidation.cs
     ├── Errors/ (ErrorDescriptor, ErrorDescriptors)
     ├── Module/ (IModule, IServiceInstaller, IEndpointMapper, IPipelineStep, PipelineOrder, ModuleRegister)
@@ -225,16 +233,16 @@ Src/
 
 ## Criterios de Aceptación
 
-- [x] `dotnet build` en `nummex-backend-v2` con 0 errores y 0 advertencias (al cerrar los slices 1 a 3).
+- [x] `dotnet build` en `nummex-backend-v2` con 0 errores y 0 advertencias (al cerrar los slices 1 a 4).
 - [x] Todo error responde `ProblemDetails` con `code` y `traceId`; 4xx con mensaje en español, 5xx con detalle genérico.
-- [ ] Superar un límite responde 429 con `Retry-After` (verificado en el límite global, en `Strict` y en `StrictWindow` de la recuperación); falta que el login use `StrictWindow` (Slice 4).
+- [x] Superar un límite responde 429 con `Retry-After` (verificado en el límite global, en `Strict`, en `StrictWindow` de la recuperación y en el login).
 - [x] `POST /api/contacts` crea contacto y prospecto en un solo guardado; email o teléfono repetido → 409.
 - [x] La recuperación de sesión responde igual (404) si falla el email o la fecha.
 - [x] Crear un contacto no espera a Odoo; el trabajo sobrevive a un reinicio y no se duplica en Odoo (verificado con Odoo simulado).
 - [x] Con Odoo caído el trabajo reintenta; al agotar reintentos queda `FAILED` y es visible (`contacts.odoo_state`; la consulta interna llega en el Slice 4).
-- [ ] Login: credenciales inválidas o usuario inactivo → el mismo 401; el refresh rota y el anterior deja de valer.
+- [x] Login: credenciales inválidas, correo inexistente o usuario inactivo → el mismo 401 (y tiempos comparables); el refresh rota y el anterior deja de valer.
 - [x] Un prospecto no puede leer a otro (403); aún no hay endpoints de modificación.
-- [ ] Esquema al día en `db-migrations/initial.sql` (hecho: `contacts`, `prospects.id_odoo_lead` y `dates.id_odoo_date`) y variables nuevas (solo nombres) en `.env.example` (las de Odoo ya existen; faltan las de JWT). Los tests los agrega el responsable.
+- [x] Esquema al día en `db-migrations/initial.sql` (hecho: `contacts`, `prospects.id_odoo_lead` y `dates.id_odoo_date`) y variables nuevas (solo nombres) en `.env.example` (Odoo y `Jwt__Issuer`, `Jwt__Audience`, `Jwt__Key`). Los tests los agrega el responsable.
 
 ## Relacionado
 
