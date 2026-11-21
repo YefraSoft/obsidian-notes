@@ -3,7 +3,7 @@ tipo: wiki
 titulo: "Mapa de bóvedas"
 autor: "Efraín García"
 creado: 2026-09-24
-actualizado: 2026-10-29
+actualizado: 2026-11-18
 estado: vigente
 tags:
   - wiki
@@ -40,14 +40,18 @@ Obsidian Vault/
 ├── Manuales/                    [manual]
 │   ├── backend-manual.md
 │   ├── cdn-service-manual.md
+│   ├── flujo-ci-cd-manual.md
 │   ├── news-service-manual.md
 │   ├── servicio-cp-manual.md
-│   └── to-production-manual.md
+│   ├── to-production-manual.md
+│   └── versionado-semver-manual.md
 ├── Metodología/                 [metodologia]
 │   └── Metodología-Second-Brain.md
 ├── Planes/                      [plan]
+│   ├── asistencias-plan.md
 │   ├── email-service-plan.md
 │   ├── nummex-app-plan.md
+│   ├── nummex-backend-v2-plan.md
 │   ├── rh-cotla-plan.md
 │   └── Tsj-Web-plan-desarollo.md
 ├── plantillas/                  [templates]
@@ -63,7 +67,18 @@ Obsidian Vault/
 │   ├── Proyecto.md
 │   └── proyectos.md
 ├── Sub-planes/                  [sub-plan]
+│   ├── asistencias-app-web-sub-plan.md                       (obsoleta, repartida en slices)
+│   ├── asistencias-panel-admin-sub-plan.md                   (obsoleta, repartida en slices)
+│   ├── asistencias-slice-0-esqueleto-sub-plan.md
+│   ├── asistencias-slice-1-ingreso-roles-sub-plan.md
+│   ├── asistencias-slice-2-ua-geocerca-sub-plan.md
+│   ├── asistencias-slice-3-enrolamiento-sub-plan.md
+│   ├── asistencias-slice-4-checada-valida-sub-plan.md
+│   ├── asistencias-slice-5-horarios-incidencias-sub-plan.md
+│   ├── asistencias-slice-6-notificaciones-sub-plan.md
+│   ├── asistencias-slice-7-consulta-reportes-sub-plan.md
 │   ├── email-service-auth-sub-plan.md
+│   ├── email-service-cicd-sub-plan.md
 │   ├── email-service-consumidores-keys-sub-plan.md
 │   ├── email-service-contactos-sub-plan.md
 │   ├── email-service-envio-grupal-sub-plan.md
@@ -73,10 +88,15 @@ Obsidian Vault/
 │   ├── email-service-seguimiento-bajas-sub-plan.md
 │   ├── email-service-sync-core-sub-plan.md
 │   ├── nummex-agent-rag-plan.md
+│   ├── nummex-backend-v2-fase-1-sub-plan.md
 │   ├── nummex-cloudflare-deploy-plan.md
 │   └── pase-directo-api-aspirantes-sub-plan.md
 ├── Testing/                     [testing]  (documentación de entrega para QA)
+│   └── email-service-datos-maestros-testing.md
 └── Wiki/                        [wiki]
+    ├── asistencias-arquitectura-wiki.md
+    ├── asistencias-reglas-de-negocio-wiki.md
+    ├── asistencias-roles-permisos-wiki.md
     ├── mapa-de-bovedas-wiki.md
     ├── repositorio-imagenes.md
     └── sso/                     (7 wikis del SSO)
@@ -86,14 +106,14 @@ Obsidian Vault/
 
 | Clase | Carpeta | Notas |
 |-------|---------|-------|
-| `manual` | `Manuales/` | 5 |
+| `manual` | `Manuales/` | 7 |
 | `metodologia` | `Metodología/` | 1 |
-| `plan` | `Planes/` | 4 |
+| `plan` | `Planes/` | 6 |
 | `plantillas` | `plantillas/` | 8 (7 templates + AGENTS) |
 | `proyecto` | `Proyectos/` | 2 |
-| `sub-plan` | `Sub-planes/` | 12 |
-| `testing` | `Testing/` | 0 |
-| `wiki` | `Wiki/` | 2 (+ 7 en `sso/`) |
+| `sub-plan` | `Sub-planes/` | 24 |
+| `testing` | `Testing/` | 1 |
+| `wiki` | `Wiki/` | 5 (+ 7 en `sso/`) |
 
 ## 2. Bóveda cloud
 
@@ -138,11 +158,14 @@ Nextcloud-cloud.tecmm.mx-punketos/
 │   ├── Portal Institucional/       (Backend/, Frontend/, Minutas/)
 │   ├── Portal web/
 │   └── Presupuesto/                (insumos/)
-├── 3. Operación/                   (4 notas .md)
+├── 3. Operación/                   (6 notas .md + Testing/ + adjuntos/)
 │   ├── Acuerdos-21-09.md
 │   ├── Efrain-Garcia-Proyectos.md
 │   ├── Efrain-Garcia-Wiki.md
+│   ├── flujo-ci-cd-manual.md       (manual genérico del equipo: ramas, CI/CD y despliegue)
 │   ├── Proyectos Ana Espinoza.md
+│   ├── versionado-semver-manual.md (manual genérico del equipo: versión SemVer con make commit-* sobre infra/utils/push.sh)
+│   ├── adjuntos/                   (SVG exportados de los diagramas Mermaid de los manuales)
 │   └── Testing/                    (notas `testing` por proyecto, para QA)
 └── Talk/
 ```
@@ -153,7 +176,7 @@ Nextcloud-cloud.tecmm.mx-punketos/
 |------|----------|
 | `1. Gobernanza/` | 46 |
 | `2. Proyectos/` | 1032 |
-| `3. Operación/` | 4 |
+| `3. Operación/` | 12 (6 notas en la raíz, 1 en `Testing/` y 5 SVG en `adjuntos/`) |
 | `Readme.md` + raíz | 1 |
 
 ## 3. Esquema local vs cloud
@@ -165,6 +188,8 @@ Nextcloud-cloud.tecmm.mx-punketos/
 | Control de versiones | Git | Nextcloud |
 | Documentos binarios | No | Sí (PDF, DOCX, XLSX, PPTX, JPG, fuentes) |
 | Reglas | `AGENTS.md` (raíz) + `plantillas/AGENTS.md` | `Readme.md` |
+| Manuales genéricos del equipo (`Manuales/`) | Por clase | `3. Operación/` (los de un proyecto, en `2. Proyectos/<proyecto>/`) |
+| Diagramas | Bloques de código `mermaid` en la nota | El mismo bloque más el SVG exportado en `3. Operación/adjuntos/` (Nextcloud Text puede no renderizar Mermaid) |
 
 ## Índice / Tabla de contenidos
 
