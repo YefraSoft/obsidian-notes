@@ -96,7 +96,7 @@ Reglas del frontmatter:
 
 Convenciones que aplican al trabajar sobre código fuente del equipo:
 
-- **Gestión de tareas**: en **Plane**, workspace `sitemas-tecmm` (https://testing.tecmm.mx), proyecto `SITEM` para documentación del código; seguir el identificador `SITEM-<n>`.
+- **Gestión de tareas**: en **Plane**, workspace `direccion-de-sistemas` (https://proyectos.tsj.mx); un proyecto por app (p. ej. `ASISTENCIAS`); seguir el identificador `<PROYECTO>-<n>`.
 - **Documentación por proyecto**: cada repo mantiene sus pendientes en Markdown dentro del repo, p. ej. `tareas-bakcned.md` (backend) y `tareas-fontend.md` (frontend) en `pase-directo/`. Esa lista es la fuente de verdad del sprint a corto plazo; Plane lo es de la planificación.
 - **Modelos de solución**: separar frontend y backend; versionar en git; los despliegues y flujos de subida se documentan como `manual` en la bóveda (`to-production-manual.md`, `backend-manual.md`).
 - **Nuevo proyecto**: crear su `<proyecto>-<tema>-plan.md` en `Planes/`, documentar manuales en `Manuales/`, y publicar su estado en `Proyectos/Proyecto.md`.

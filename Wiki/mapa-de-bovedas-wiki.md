@@ -3,7 +3,7 @@ tipo: wiki
 titulo: "Mapa de bóvedas"
 autor: "Efraín García"
 creado: 2026-09-24
-actualizado: 2026-11-17
+actualizado: 2026-11-18
 estado: vigente
 tags:
   - wiki
@@ -67,11 +67,16 @@ Obsidian Vault/
 │   ├── Proyecto.md
 │   └── proyectos.md
 ├── Sub-planes/                  [sub-plan]
-│   ├── asistencias-app-web-sub-plan.md
-│   ├── asistencias-checada-valida-sub-plan.md
-│   ├── asistencias-cicd-sub-plan.md
-│   ├── asistencias-geocerca-sub-plan.md
-│   ├── asistencias-reconocimiento-facial-sub-plan.md
+│   ├── asistencias-app-web-sub-plan.md                       (obsoleta, repartida en slices)
+│   ├── asistencias-panel-admin-sub-plan.md                   (obsoleta, repartida en slices)
+│   ├── asistencias-slice-0-esqueleto-sub-plan.md
+│   ├── asistencias-slice-1-ingreso-roles-sub-plan.md
+│   ├── asistencias-slice-2-ua-geocerca-sub-plan.md
+│   ├── asistencias-slice-3-enrolamiento-sub-plan.md
+│   ├── asistencias-slice-4-checada-valida-sub-plan.md
+│   ├── asistencias-slice-5-horarios-incidencias-sub-plan.md
+│   ├── asistencias-slice-6-notificaciones-sub-plan.md
+│   ├── asistencias-slice-7-consulta-reportes-sub-plan.md
 │   ├── email-service-auth-sub-plan.md
 │   ├── email-service-cicd-sub-plan.md
 │   ├── email-service-consumidores-keys-sub-plan.md
@@ -89,6 +94,9 @@ Obsidian Vault/
 ├── Testing/                     [testing]  (documentación de entrega para QA)
 │   └── email-service-datos-maestros-testing.md
 └── Wiki/                        [wiki]
+    ├── asistencias-arquitectura-wiki.md
+    ├── asistencias-reglas-de-negocio-wiki.md
+    ├── asistencias-roles-permisos-wiki.md
     ├── mapa-de-bovedas-wiki.md
     ├── repositorio-imagenes.md
     └── sso/                     (7 wikis del SSO)
@@ -103,9 +111,9 @@ Obsidian Vault/
 | `plan` | `Planes/` | 6 |
 | `plantillas` | `plantillas/` | 8 (7 templates + AGENTS) |
 | `proyecto` | `Proyectos/` | 2 |
-| `sub-plan` | `Sub-planes/` | 19 |
+| `sub-plan` | `Sub-planes/` | 24 |
 | `testing` | `Testing/` | 1 |
-| `wiki` | `Wiki/` | 2 (+ 7 en `sso/`) |
+| `wiki` | `Wiki/` | 5 (+ 7 en `sso/`) |
 
 ## 2. Bóveda cloud
 

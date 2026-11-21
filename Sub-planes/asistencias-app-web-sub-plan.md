@@ -1,57 +1,39 @@
 ---
 tipo: sub-plan
-titulo: "Asistencias — App web"
+titulo: "Asistencias — App web (repartido en slices)"
 autor: "Efraín García"
 creado: 2026-11-17
-actualizado: 2026-11-17
-estado: pendiente
+actualizado: 2026-11-18
+estado: completado
 proyecto: asistencias
 padre: "[[asistencias-plan]]"
 tags:
   - plan
   - sub-plan
   - asistencias
-  - app-web
+  - obsoleto
 ---
 
-# Asistencias — App web
+# Asistencias — App web (repartido en slices)
 
 > **Plan padre:** [[asistencias-plan]]
-> Cliente web de checadas (migrará a móvil): captura GPS y foto en vivo y las envía a la API.
+> Esta nota quedó **obsoleta** con el enfoque de vertical slices: cada slice incluye su propia pantalla. Se conserva hasta que el responsable autorice eliminarla.
 
-## Pendientes
+## Dónde quedó cada parte
 
-- [ ] Definir el stack del frontend (referencia: Astro + React como en `email-service`).
-- [ ] Definir la estrategia de migración a móvil (PWA o app nativa).
+| Parte de la app web | Slice |
+|---------------------|-------|
+| Esqueleto Astro + React, página de la PoC | [[asistencias-slice-0-esqueleto-sub-plan]] |
+| Login, aviso de privacidad y roles | [[asistencias-slice-1-ingreso-roles-sub-plan]] |
+| Panel de UA y geocercas | [[asistencias-slice-2-ua-geocerca-sub-plan]] |
+| Consentimiento y enrolamiento | [[asistencias-slice-3-enrolamiento-sub-plan]] |
+| Pantalla de checada, captura, subida directa al CDN | [[asistencias-slice-4-checada-valida-sub-plan]] |
+| Pantallas de horarios e incidencias | [[asistencias-slice-5-horarios-incidencias-sub-plan]] |
+| Consulta, visor de evidencia (proxy de Astro) y reportes | [[asistencias-slice-7-consulta-reportes-sub-plan]] |
 
-## Estado Actual
-
-| Área | Estado |
-|------|--------|
-| Stack | ⏳ Por definir |
-| Pantallas | ⏳ Pendiente |
-
-## Alcance
-
-Pantalla de checada (GPS + cámara en vivo, sin selector de archivos), historial de la persona y administración básica. La validación nunca se decide en el cliente.
-
-## Implementación
-
-### Paso 1 — Captura
-- [ ] Permisos de ubicación y cámara; foto tomada con la cámara del dispositivo.
-
-### Paso 2 — Checada
-- [ ] Envío a la API y presentación del resultado (válida / rechazada con motivo).
-
-### Paso 3 — Administración
-- [ ] Centros de trabajo, personal y consulta de checadas.
-
-## Criterios de Aceptación
-
-- [ ] No hay forma de elegir un archivo de la galería como evidencia.
-- [ ] El flujo funciona en navegador móvil.
+La comunicación sigue vigente: lo ligero por Astro Actions; el clip de evidencia directo del navegador al CDN; la evidencia se lee por un proxy en el servidor de Astro. Ver [[asistencias-arquitectura-wiki]].
 
 ## Relacionado
 
 - [[asistencias-plan]]
-- [[asistencias-checada-valida-sub-plan]]
+- [[asistencias-arquitectura-wiki]]
