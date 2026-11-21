@@ -3,7 +3,7 @@ tipo: proyecto
 titulo: "Estatus en proyectos a mi cargo"
 autor: "Efraín García"
 creado: 2026-09-17
-actualizado: 2026-10-27
+actualizado: 2026-11-20
 estado: en-progreso
 tags:
   - estatus
@@ -35,3 +35,7 @@ Servicio de envío de correos (API .NET + panel Astro). Ya están listos la infr
 ## Asistencias Tecnológico Superior de Jalisco
 
 App de checadas del personal (web, luego móvil; backend C#). Una checada es válida si el GPS está dentro del centro de trabajo y la foto tomada con la cámara del dispositivo pasa el reconocimiento facial. Se despliega en Dokploy con imágenes en Harbor y secretos en OpenBao. Equipo: Efraín García (desarrollo), Gabriel Cisneros (líder de equipo), Ana Espinoza (Scrum Master). Fase 1 (fundamentos) en progreso. Plan: [[asistencias-plan]].
+
+## RH Cotla (Comercial Tlaquepaque)
+
+App de RH para Ferretería Cotla: checadas con selfie y GPS, ausencias, horas extra, incidencias y reportes (backend ASP.NET Core, panel Next.js, móvil Expo). Versión 1.0.0 cerrada el 2026-11-20; desarrolla Yefrasoft S.A. de C.V. Un sub-plan por fase (12) y la deuda centralizada en pendientes. Plan: [[rh-cotla-plan]] (reglas, diagramas y estado por fase) · Pendientes: [[rh-cotla-pendientes-sub-plan]] (17 feats y 38 fixes).
