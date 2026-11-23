@@ -25,20 +25,21 @@
 |---------|----------------|-----------|
 | `Manuales/` | `manual` | Cómo operar o usar algo: API, deploys, servicios, scripts. |
 | `Planes/` | `plan` | Plan de trabajo / plan de desarrollo de un proyecto completo. |
-| `Sub-planes/` | `sub-plan` | Pieza o entregable de un plan padre (obligatorio `padre:`). |
+| `Sub-planes/<plan-padre>/` | `sub-plan` | Pieza o entregable de un plan padre (obligatorio `padre:`). Una subcarpeta por plan, nombrada como el archivo del plan padre sin `.md` (p. ej. `Sub-planes/checadores-plan/checadores-slice-04-captura-sub-plan.md`). |
 | `Wiki/` | `wiki` | Referencia, catálogos y conocimiento reutilizable. |
 | `Proyectos/` | `proyecto` | Estatus, pendientes y acuerdos del equipo. |
 | `Metodología/` | `metodologia` | Técnicas de productividad y segunda mente (Second Brain, PARA…). |
 | `Testing/` | `testing` | Documentación de entrega para QA: objetivo, funcionamiento, endpoints (request/response) y referencias al plan/wiki/repo. **No** es guía de pruebas. |
 | `plantillas/` | — | Solo plantillas + `AGENTS.md`. Nunca contenido final. |
 
-Regla: cada nota vive en la carpeta de su clase. `plantillas/` nunca guarda notas de trabajo.
+Regla: cada nota vive en la carpeta de su clase; los sub-planes, además, en la subcarpeta de su plan padre (la carpeta coincide con el valor de `padre:`). Un plan nuevo con sub-planes crea su subcarpeta. `plantillas/` nunca guarda notas de trabajo.
 
 ## 2. Nomenclatura de archivos
 
 - `kebab-case`, minúsculas, sin espacios ni tildes en el nombre (la bóveda usa UTF-8 para el contenido, pero el nombre de archivo simple).
 - Patrón: `<proyecto>-<tema>-<clase>.md`
   - `nummex-app-plan.md`, `backend-manual.md`, `to-production-manual.md`, `rh-cotla-plan.md`, `email-service-api-testing.md`.
+  - Los sub-planes conservan el prefijo del proyecto y viven en `Sub-planes/<plan-padre>/` (p. ej. `Sub-planes/rh-cotla-plan/rh-cotla-fase-04-checador-sub-plan.md`).
 - Los índices/estatus se permiten sin prefijo de tema: `Proyecto.md`, `proyectos.md`.
 
 ## 3. Frontmatter estándar (todas las notas)
@@ -89,7 +90,7 @@ Reglas del frontmatter:
 
 1. **Crear**: copiar la plantilla de la clase desde `plantillas/Template-<Clase>.md` → carpeta de su clase → llenar frontmatter y cuerpo → enlazar relacionadas.
 2. **Actualizar**: respetar el formato de la sección correspondiente y subir `actualizado` a la fecha del día.
-3. **Mover**: si una nota cambia de clase, moverla de carpeta con `git mv` (preserva historial) y ajustar frontmatter/tipo.
+3. **Mover**: si una nota cambia de clase, moverla de carpeta con `git mv` (preserva historial) y ajustar frontmatter/tipo. Si es un sub-plan que cambia de plan padre, moverlo también a la subcarpeta del nuevo padre y actualizar `padre:`.
 4. **Nunca** inventar URLs, secretos o datos que no estén en el contenido.
 
 ## 7. Proyectos de código (además de la bóveda)
@@ -115,7 +116,7 @@ Antes de terminar una tarea sobre la bóveda:
 - [ ] Cada nota tocada tiene `tipo`, `titulo`, `autor`, `creado`, `actualizado`, `estado` y, si aplica, `proyecto` / `padre`.
 - [ ] `estado` y `tipo` son del vocabulario cerrado.
 - [ ] La nota está en la carpeta de su clase.
-- [ ] Sub-planes con `padre:` correcto.
+- [ ] Sub-planes con `padre:` correcto y ubicados en `Sub-planes/<plan-padre>/` (la carpeta coincide con `padre:`).
 - [ ] Enlaces `[[...]]` no rotos (por nombre).
 - [ ] Cambios sincronizados en la Bóveda Cloud (Nextcloud).
 - [ ] Git: cambios versionados (el vault es repo).

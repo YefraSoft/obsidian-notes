@@ -1,5 +1,5 @@
 ---
-tipo: sub-plan
+tipo: sub-plan            # destino: Sub-planes/<plan-padre>/ (carpeta = nombre del plan padre sin .md)
 titulo: "{{title}}"
 autor: ""
 creado: {{date}}

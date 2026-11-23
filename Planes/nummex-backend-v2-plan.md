@@ -3,7 +3,7 @@ tipo: plan
 titulo: "Nummex Backend v2 — Plan de Implementación"
 autor: "Efraín García"
 creado: 2026-10-27
-actualizado: 2026-11-02
+actualizado: 2026-11-23
 estado: en-progreso
 proyecto: nummex
 tags:
@@ -502,6 +502,8 @@ Sub-plan de la Fase 1 (slices 1 a 4): [[nummex-backend-v2-fase-1-sub-plan]]. Sub
 - **Deuda conocida:** `ProspectService` de v1 guardaba dos veces por caso de uso (local y Odoo); v2 lo evita con la cola.
 
 # Archivos Clave del Proyecto
+
+> **Sub-planes (3):** carpeta `Sub-planes/nummex-backend-v2-plan/` en la bóveda local.
 
 | Archivo | Propósito |
 |---------|-----------|

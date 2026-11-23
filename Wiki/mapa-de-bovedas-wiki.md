@@ -66,31 +66,14 @@ Obsidian Vault/
 ├── Proyectos/                   [proyecto]
 │   ├── Proyecto.md
 │   └── proyectos.md
-├── Sub-planes/                  [sub-plan]
-│   ├── asistencias-app-web-sub-plan.md                       (obsoleta, repartida en slices)
-│   ├── asistencias-panel-admin-sub-plan.md                   (obsoleta, repartida en slices)
-│   ├── asistencias-slice-0-esqueleto-sub-plan.md
-│   ├── asistencias-slice-1-ingreso-roles-sub-plan.md
-│   ├── asistencias-slice-2-ua-geocerca-sub-plan.md
-│   ├── asistencias-slice-3-enrolamiento-sub-plan.md
-│   ├── asistencias-slice-4-checada-valida-sub-plan.md
-│   ├── asistencias-slice-5-horarios-incidencias-sub-plan.md
-│   ├── asistencias-slice-6-notificaciones-sub-plan.md
-│   ├── asistencias-slice-7-consulta-reportes-sub-plan.md
-│   ├── email-service-auth-sub-plan.md
-│   ├── email-service-cicd-sub-plan.md
-│   ├── email-service-consumidores-keys-sub-plan.md
-│   ├── email-service-contactos-sub-plan.md
-│   ├── email-service-envio-grupal-sub-plan.md
-│   ├── email-service-envio-individual-sub-plan.md
-│   ├── email-service-grupos-sub-plan.md
-│   ├── email-service-plantillas-sub-plan.md
-│   ├── email-service-seguimiento-bajas-sub-plan.md
-│   ├── email-service-sync-core-sub-plan.md
-│   ├── nummex-agent-rag-plan.md
-│   ├── nummex-backend-v2-fase-1-sub-plan.md
-│   ├── nummex-cloudflare-deploy-plan.md
-│   └── pase-directo-api-aspirantes-sub-plan.md
+├── Sub-planes/                  [sub-plan]  (una subcarpeta por plan padre)
+│   ├── asistencias-plan/            (10: slices 0 a 7 + 2 obsoletas)
+│   ├── checadores-plan/             (13: slices 00 a 12)
+│   ├── email-service-plan/          (10)
+│   ├── nummex-app-plan/             (2: agent-rag, cloudflare-deploy)
+│   ├── nummex-backend-v2-plan/      (3: fase 1, fase 2, frontend fase A)
+│   ├── rh-cotla-plan/               (19: fases 01 a 12, backend, frontend, móvil, pendientes…)
+│   └── Tsj-Web-plan-desarollo/      (1: pase-directo-api-aspirantes)
 ├── Testing/                     [testing]  (documentación de entrega para QA)
 │   └── email-service-datos-maestros-testing.md
 └── Wiki/                        [wiki]
@@ -111,7 +94,7 @@ Obsidian Vault/
 | `plan` | `Planes/` | 6 |
 | `plantillas` | `plantillas/` | 8 (7 templates + AGENTS) |
 | `proyecto` | `Proyectos/` | 2 |
-| `sub-plan` | `Sub-planes/` | 24 |
+| `sub-plan` | `Sub-planes/<plan-padre>/` | 58 |
 | `testing` | `Testing/` | 1 |
 | `wiki` | `Wiki/` | 5 (+ 7 en `sso/`) |
 
@@ -184,7 +167,7 @@ Nextcloud-cloud.tecmm.mx-punketos/
 | Dimensión | Bóveda local | Bóveda cloud |
 |-----------|--------------|--------------|
 | Orden | Por clase (`tipo`) | Por dominio |
-| Raíces | `Manuales/`, `Planes/`, `Sub-planes/`, `Wiki/`, `Proyectos/`, `Metodología/`, `Testing/`, `plantillas/` | `1. Gobernanza/`, `2. Proyectos/`, `3. Operación/`, `Talk/` |
+| Raíces | `Manuales/`, `Planes/`, `Sub-planes/<plan-padre>/`, `Wiki/`, `Proyectos/`, `Metodología/`, `Testing/`, `plantillas/` | `1. Gobernanza/`, `2. Proyectos/`, `3. Operación/`, `Talk/` |
 | Control de versiones | Git | Nextcloud |
 | Documentos binarios | No | Sí (PDF, DOCX, XLSX, PPTX, JPG, fuentes) |
 | Reglas | `AGENTS.md` (raíz) + `plantillas/AGENTS.md` | `Readme.md` |

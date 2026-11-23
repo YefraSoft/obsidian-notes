@@ -28,7 +28,7 @@ Un segundo cerebro almacena conocimiento en notas enlazadas para no depender de 
 ## Flujo
 
 1. **Capturar** — las notas se crean en la carpeta `plantillas/`-ready: se parte de una plantilla por clase.
-2. **Organizar** — cada nota vive en la carpeta de su clase (`Manuales/`, `Planes/`, `Sub-planes/`, `Wiki/`, `Proyectos/`, `Metodología/`).
+2. **Organizar** — cada nota vive en la carpeta de su clase (`Manuales/`, `Planes/`, `Sub-planes/<plan-padre>/`, `Wiki/`, `Proyectos/`, `Metodología/`).
 3. **Revisar** — las notas `Proyectos/proyectos.md` y `Proyectos/Proyecto.md` actúan como índices de estatus y pendientes; se mantienen al día.
 4. **Usar** — los enlaces `[[...]]` conectan planes con sus sub-planes (`padre: "[[nummex-app-plan]]"`) y con manuales relacionados.
 
@@ -38,7 +38,7 @@ Un segundo cerebro almacena conocimiento en notas enlazadas para no depender de 
 |---------|-----------|
 | `Manuales/` | Cómo operar o usar algo (API, deploys, servicios). |
 | `Planes/` | Plan de trabajo de un proyecto completo. |
-| `Sub-planes/` | Piezas de un plan padre (enlazadas con `padre:`). |
+| `Sub-planes/<plan-padre>/` | Piezas de un plan padre, una subcarpeta por plan (enlazadas con `padre:`). |
 | `Wiki/` | Referencia, catálogos y conocimiento reutilizable. |
 | `Proyectos/` | Estatus, pendientes y acuerdos del equipo. |
 | `Metodología/` | Técnicas y convenciones de esta bóveda. |

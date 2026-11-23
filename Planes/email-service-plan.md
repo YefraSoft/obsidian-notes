@@ -3,7 +3,7 @@ tipo: plan
 titulo: EmailSendService — Plan de Desarrollo
 autor: Efraín García
 creado: 2026-10-27
-actualizado: 2026-11-10
+actualizado: 2026-11-23
 estado: en-progreso
 proyecto: email-service
 tags:
@@ -376,6 +376,8 @@ Resumen; el detalle de cada una está en las **Reglas de Trabajo**.
 - **Módulos:** cada dominio es un `IModule` (`ConsumerModule`, `ManagerModule`, `TemplateModule`…) con las capacidades `IServiceInstaller`, `IEndpointMapper`, `IQueryMapper` (campos GraphQL) e `IPipelineStep`; se descubren por reflexión en orden alfabético. Las regex viven en `Core/Text/RegexLibrary` (`IRegexLibrary`).
 
 # Archivos Clave del Proyecto
+
+> **Sub-planes (10):** carpeta `Sub-planes/email-service-plan/` en la bóveda local.
 
 | Archivo | Propósito |
 |---------|-----------|

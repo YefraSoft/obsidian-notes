@@ -172,21 +172,21 @@ stateDiagram-v2
 | Esquema Postgres | ⏳ |
 | Proyectos en blanco | ⏳ |
 
-| Fase / Slice | Dominio | Estado |
-|--------------|---------|--------|
-| 0 | Base y plataforma — [[checadores-slice-00-base-sub-plan]] | ⏳ |
-| 1 | Identidad, roles y permisos — [[checadores-slice-01-identidad-sub-plan]] | ⏳ |
-| 2 | Catálogos y organización — [[checadores-slice-02-catalogos-sub-plan]] | ⏳ |
-| 3 | Migración CORE legacy → CORE — [[checadores-slice-03-migracion-sub-plan]] | ⏳ |
-| 4 | Captura de checadas — [[checadores-slice-04-captura-sub-plan]] | ⏳ |
-| 5 | Horarios, tolerancias y calendario — [[checadores-slice-05-horarios-sub-plan]] | ⏳ |
-| 6 | Reglas e incidencias — [[checadores-slice-06-incidencias-sub-plan]] | ⏳ |
-| 7 | Permisos y justificantes — [[checadores-slice-07-permisos-sub-plan]] | ⏳ |
-| 8 | Saldos y prestaciones — [[checadores-slice-08-saldos-sub-plan]] | ⏳ |
-| 9 | Notificaciones — [[checadores-slice-09-notificaciones-sub-plan]] | ⏳ |
-| 10 | Reportes y estadísticas — [[checadores-slice-10-reportes-sub-plan]] | ⏳ |
-| 11 | Autoservicio / kiosko — [[checadores-slice-11-autoservicio-sub-plan]] | ⏳ |
-| 12 | Administración y observabilidad — [[checadores-slice-12-administracion-sub-plan]] | ⏳ |
+| Fase / Slice | Dominio                                                                           | Estado |
+| ------------ | --------------------------------------------------------------------------------- | ------ |
+| 0            | Base y plataforma — [[checadores-slice-00-base-sub-plan]]                         | ⏳      |
+| 1            | Identidad, roles y permisos — [[checadores-slice-01-identidad-sub-plan]]          | ⏳      |
+| 2            | Catálogos y organización — [[checadores-slice-02-catalogos-sub-plan]]             | ⏳      |
+| 3            | Migración CORE legacy → CORE — [[checadores-slice-03-migracion-sub-plan]]         | ⏳      |
+| 4            | Captura de checadas — [[checadores-slice-04-captura-sub-plan]]                    | ⏳      |
+| 5            | Horarios, tolerancias y calendario — [[checadores-slice-05-horarios-sub-plan]]    | ⏳      |
+| 6            | Reglas e incidencias — [[checadores-slice-06-incidencias-sub-plan]]               | ⏳      |
+| 7            | Permisos y justificantes — [[checadores-slice-07-permisos-sub-plan]]              | ⏳      |
+| 8            | Saldos y prestaciones — [[checadores-slice-08-saldos-sub-plan]]                   | ⏳      |
+| 9            | Notificaciones — [[checadores-slice-09-notificaciones-sub-plan]]                  | ⏳      |
+| 10           | Reportes y estadísticas — [[checadores-slice-10-reportes-sub-plan]]               | ⏳      |
+| 11           | Autoservicio / kiosko — [[checadores-slice-11-autoservicio-sub-plan]]             | ⏳      |
+| 12           | Administración y observabilidad — [[checadores-slice-12-administracion-sub-plan]] | ⏳      |
 
 # Decisiones de Diseño (vigentes)
 
@@ -214,6 +214,8 @@ stateDiagram-v2
 - **Convenciones de BD:** `snake_case` en español, `timestamptz`, claves únicas de idempotencia, claves de origen para la migración.
 
 # Archivos Clave del Proyecto
+
+> **Sub-planes (13):** carpeta `Sub-planes/checadores-plan/` en la bóveda local.
 
 | Archivo | Propósito |
 |---------|-----------|

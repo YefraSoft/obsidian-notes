@@ -3,7 +3,7 @@ tipo: plan
 titulo: "Nummex App — Plan de Desarrollo"
 autor: "Efraín García"
 creado: 2026-09-10
-actualizado: 2026-09-11
+actualizado: 2026-11-23
 estado: en-progreso
 proyecto: nummex
 tags:
@@ -95,6 +95,8 @@ tags:
 ---
 
 ## Archivos Clave del Proyecto
+
+> **Sub-planes (2):** carpeta `Sub-planes/nummex-app-plan/` en la bóveda local.
 
 | Archivo | Propósito |
 |---------|-----------|

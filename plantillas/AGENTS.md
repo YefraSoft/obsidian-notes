@@ -13,7 +13,7 @@ Este archivo norma cómo se **usan las plantillas** de esta carpeta. Las reglas 
 |-----------|----------------|---------|
 | `Template-Proyecto.md` | `proyecto` | `Proyectos/` |
 | `Template-Plan-de-trabajo.md` | `plan` | `Planes/` |
-| `Template-Sub-plan.md` | `sub-plan` | `Sub-planes/` |
+| `Template-Sub-plan.md` | `sub-plan` | `Sub-planes/<plan-padre>/` |
 | `Template-Manual.md` | `manual` | `Manuales/` |
 | `Template-Wiki.md` | `wiki` | `Wiki/` |
 | `Template-Metodologia.md` | `metodologia` | `Metodología/` |
@@ -37,7 +37,7 @@ Este archivo norma cómo se **usan las plantillas** de esta carpeta. Las reglas 
 `proyecto` · `plan` · `sub-plan` · `manual` · `wiki` · `metodologia` · `testing`
 
 - `sub-plan` **requiere** la clave `padre`.
-- Los planes completos van a `Planes/`; sus piezas, a `Sub-planes/` apuntando al padre con `padre:`.
+- Los planes completos van a `Planes/`; sus piezas, a `Sub-planes/<plan-padre>/` (subcarpeta nombrada como el plan padre, sin `.md`) apuntando al padre con `padre:`.
 - `testing` describe la app **para QA** (objetivo, funcionamiento, endpoints con request/response, referencias al plan/wiki/repo). **No** incluye casos de prueba ni pasos de ejecución: QA decide cómo probar. La única sección que habla de pruebas es `Nota de pruebas`, va al final y es opcional (si desarrollo probó o no, y qué alcance tuvo).
 
 ## Verificación
@@ -46,5 +46,5 @@ Antes de continuar, comprobar que:
 - [ ] La nota copiada tiene su frontmatter completo (sin `{{...}}` sin resolver).
 - [ ] El `tipo` coincide con la clase de la plantilla usada.
 - [ ] Si es `sub-plan`, `padre` apunta a un plan existente.
-- [ ] La nota quedó en la carpeta de su clase, no aquí.
+- [ ] La nota quedó en la carpeta de su clase, no aquí (sub-plan: en la subcarpeta de su plan padre).
 - [ ] Si es `testing`, la sección `Referencias` apunta al plan y a la wiki (bóveda local + ruta en Nextcloud) y al repo git / wiki del repo cuando aplique.

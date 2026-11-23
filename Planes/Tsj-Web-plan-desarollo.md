@@ -3,7 +3,7 @@ tipo: plan
 titulo: "TSJ-Web — Plan de Desarrollo"
 autor: "Efraín García"
 creado: 2026-09-09
-actualizado: 2026-09-17
+actualizado: 2026-11-23
 estado: en-progreso
 proyecto: tsj-web
 tags:
@@ -120,6 +120,8 @@ tags:
 ---
 
 ## Archivos Clave del Proyecto
+
+> **Sub-planes (1):** carpeta `Sub-planes/Tsj-Web-plan-desarollo/` en la bóveda local.
 
 | Archivo | Propósito |
 |---------|-----------|

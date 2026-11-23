@@ -3,7 +3,7 @@ tipo: plan
 titulo: "Asistencias Tecnológico Superior de Jalisco — Plan de Desarrollo"
 autor: "Efraín García"
 creado: 2026-11-17
-actualizado: 2026-11-18
+actualizado: 2026-11-23
 estado: en-progreso
 proyecto: asistencias
 tags:
@@ -116,6 +116,8 @@ Los roles viven en `new-core`, ligados por usuario. Detalle y matriz de permisos
 - Referencia de implementación: [[email-service-plan]]. Reglas de negocio: [[asistencias-reglas-de-negocio-wiki]].
 
 ## Archivos Clave del Proyecto
+
+> **Sub-planes (10):** carpeta `Sub-planes/asistencias-plan/` en la bóveda local.
 
 | Archivo | Propósito |
 |---------|-----------|

@@ -3,7 +3,7 @@ tipo: plan
 titulo: RH Cotla — Plan de Desarrollo
 autor: Efraín García
 creado: 2026-08-25
-actualizado: 2026-11-20
+actualizado: 2026-11-23
 estado: vigente
 proyecto: rh-cotla
 tags:
@@ -266,6 +266,8 @@ Resumen; el detalle está en las **Reglas de Trabajo** y en cada sub-plan.
 - **Deuda conocida:** ver [[rh-cotla-pendientes-sub-plan]]; la deuda aceptada A1–A2 y el registro P1–P8 están en [[rh-cotla-progreso-backend-sub-plan]].
 
 # Archivos Clave del Proyecto
+
+> **Sub-planes (19):** carpeta `Sub-planes/rh-cotla-plan/` en la bóveda local.
 
 | Ruta (repo `rh-cotla`) | Propósito |
 |------------------------|-----------|
